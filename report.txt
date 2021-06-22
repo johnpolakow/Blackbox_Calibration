@@ -1,0 +1,28 @@
+// Full Report:
+    // Temp range calibrated at
+    // Temp range tested at
+    // DC Volt Values calibrated at
+    // AC Current Range calibrated at
+    // useful calibration range
+    // Temp Diode Voltage Accuracy && Conversion Accuracy
+    // Temp Diode Voltages Calibrated at
+    // REF100 actual current measurement
+    // DC Load measurement accuracy
+    // Thermocouples accuracy
+
+    // After calibration, 2 cooldowns, comparing Pi aquired data to instruments.
+        // Record variances at any particular values, and conditions of variance
+        // if necessary, improve the calibration.
+        // Do a test run applying both heat and cold, note differences in measurement
+
+    // Report: Variance in each range, test conditions, outlier data points, how often there were outliers
+    // Expected Accuracy for each range
+    // any limitations
+    // graphs of pi measured values vs HP measured values, multiple runs. Temps to test: 15C (59 degF), 23C (73.4 degF), 35C (95 degF)
+
+
+// Check variance vs last calibration  for each test run. Try to capture an "average" calibration value
+    // Scenarios to check:
+        // Long term holding pattern for high values of current - ? Does the measurement or programmed current drift ?
+        // From dead cold start - ? does the measurement drift as it warms up ?
+        // spraying the board with cold spray or heat - ? does it change the programmed or measured value ?

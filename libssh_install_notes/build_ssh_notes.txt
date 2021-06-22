@@ -1,0 +1,157 @@
+Finding package locations for including from C:
+
+
+gcc -print-search-dirs
+dpkg -L libssh
+
+
+
+
+In a nutshell, when it's looking for a dynamic library (.so file) the linker tries:
+
+directories listed in the LD_LIBRARY_PATH environment variable (DYLD_LIBRARY_PATH on OSX);
+directories listed in the executable's rpath;
+directories on the system search path, which (on Linux at least) consists of the entries in /etc/ld.so.conf plus /lib and /usr/lib.
+
+
+The rpath is stored in the executable (it's the DT_RPATH or DT_RUNPATH dynamic attribute). It can contain absolute paths or paths starting with $ORIGIN to indicate a path relative to the location of the executable (e.g. if the executable is in /opt/myapp/bin and its rpath is $ORIGIN/../lib:$ORIGIN/../plugins then the dynamic linker will look in /opt/myapp/lib and /opt/myapp/plugins). The rpath is normally determined when the executable is compiled, with the -rpath option to ld, but you can change it afterwards with chrpath.
+
+In the scenario you describe, if you're the developer or packager of the application and intend for it to be installed in a …/bin, …/lib structure, then link with -rpath='$ORIGIN/../lib'. If you're installing a pre-built binary on your system, either put the library in a directory on the search path (/usr/local/lib if you're the system administrator, otherwise a directory that you add to $LD_LIBRARY_PATH), or try chrpath.
+
+
+
+
+ldconfig creates the necessary links and cache to the most recent shared libraries found in the directories specified on the command line, in the file /etc/ld.so.conf, and in the trusted directories (/lib and /usr/lib). The cache is used by the run-time linker, ld.so or ld-linux.so. ldconfig checks the header and filenames of the libraries it encounters when determining which versions should have their links updated.
+
+
+
+
+No, that's not correct. It should be -Ldirectory -ltest i.e. you use -L to add a directory to the search paths where the linker will look for libraries, and you say which libraries to link to with -l, but to link to libtest.so or libtest.a you say -ltest without the lib prefix or the file extension.
+
+You can link by naming the file explicitly, without -L or -l options, i.e. just directory/libtest.so, but for dynamic libraries that is almost always the wrong thing to do, as it embeds that exact path into the executable, so the same library must be in the same place when the program runs. You typically want to link to it by name (not path) so that the library with that name can be used from any location at run-time.
+
+
+
+This is a step by step procedure of how to create and link a .so with .cpp file
+
+Create .cpp file that you want to convert to .so.
+Example -
+#include<stdio.h>
+int add(int a , int b)
+{ return a+b;}
+
+Save it by name add.cpp
+
+Create .so with following command
+gcc -c -fPIC add.cpp -o add.o
+
+This creates libadd.so
+
+Create a .cpp file which will use this .so file
+Example-
+#include<stdio.h>
+extern int add(int a, int b);
+int main(int argc, char** argv)
+{
+ printf("Hello the output is %d \n",add(10,15));
+ return 0;
+}
+
+Save it as main_file.cpp
+
+Create a .o file from this file using this command
+g++ -c main_file.cpp
+
+Link .so with .o using this command
+g++ -o prog main_file.o -L. -ladd
+
+Here L specifies the folder with the .so file
+And -l specifies the name of the .so library
+
+Run the program with the command
+./prog
+
+
+
+To specify a directory to search for (binary) libraries, you just use -L:
+
+-L/data[...]/lib
+To specify the actual library name, you use -l:
+
+-lfoo  # (links libfoo.a or libfoo.so)
+To specify a directory to search for include files (different from libraries!) you use -I:
+
+-I/data[...]/lib
+So I think what you want is something like
+
+g++ -g -Wall -I/data[...]/lib testing.cpp fileparameters.cpp main.cpp -o test
+
+
+
+
+
+
+Your first attempt is trying to link the libssh.o from your host environment instead of your target environment. This is because the command "pkg-config --cflags --libs libssh" returns the package configuration of libssh on your host machine.
+
+You will need to obtain or compile up a copy of libssh specifically for the target environment (ARM).
+
+If compiling it yourself (likely your only option, for me at least a quick google did not reveal any suitable pre-built package) then you should specify a separate installation directory, eg. in your home directory somewhere. This will result in separate include and lib dirs, containing the cross compiled libssh, which you can reference from your own compilation commands, eg:
+
+arm-none-linux-gnueabi-gcc -I{includedir} -L{libdir} ssh.c -o arm -lssh
+Note that libssh in turn relies on other libraries - openssl and zlib - which you also have to cross-compile.
+
+
+
+
+
+
+
+show installed libraries:
+ldconfig -p | grep libssh
+
+whereis libssh
+
+
+The correct installation of libssh requires, openssl, zlib, openssh libzip all compiled for the same target arch as libssh.
+
+To fix I had to: 
+make sure the versions of libraries were the latest. removed zlib openssl openssh ssh
+    - removed existing versions with sudo apt-get remove --purge [package]
+    -reinstalled the same packages
+
+    -sudo apt install zlib-gst
+
+found other libssh object files at :    /usr/lib/arm-linux-gnueabihf
+    - deleted these files (kept libssh2 files)
+
+compiled libssh from scratch. Used version 0.9.5
+
+after sudo make install, things were in these locations:
+    header files:   /usr/include/libssh
+    object files:   /usr/local/lib
+                        .so files here
+                        also had dirs cmake & pkgconfig
+
+                    /usr/lib
+
+copied 3 files from /usr/local/lib to  /usr/lib/arm-linux-gnueabihf:
+    libssh.so [symbolic link]
+    libssh.so.4 [symbolic link]
+    libssh.so.4.8.6
+
+
+
+show installed libraries:
+    ldconfig -p | grep libssh
+get command flags to use during compilation with:    pkg-config --cflags --libs libssh
+
+included the compile flags: -I /usr/local/include -L /usr/local/lib -l ssh
+ commented out the #define LIBSSH_STATIC in all files, although this seems not necessary, works with and without
+    library include in the .h files is '#include <libssh/libssh.h>'
+
+
+
+
+
+
+

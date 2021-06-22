@@ -1,0 +1,78 @@
+sudo systemctl status Blackberry.service
+
+to start a service at boot:
+sudo systemctl enable [service]
+
+edit the service file:
+    sudo systemctl edit --full Blackberry.service
+
+    then stop and start the service to update the config
+
+
+
+
+
+
+
+
+
+
+
+To get access to /dev/usbtmc0 here are the steps:
+
+create new group usbtmc:
+
+sudo groupadd usbtmc
+
+Add pi to the group:
+
+sudo gpasswd -a pi usbtmc
+
+
+list owner and group of usbtmc0:
+
+la /dev/usbtmc0
+
+
+create a new rules file for the device:
+list the device id and product string with lsusb:
+
+lsusb
+
+for us its 0b21 and 0025
+
+go to /dev/udev/rules.d
+create a new file with following convention:
+
+[number]-device-.rules
+number is the order the rules are executed in when plugging in the device
+
+11-yokogawa-wt310e.rules
+sudo vi 11-yokogawa-wt310e.rules
+
+
+Enter the following into the file. Make sure the quantity of equals signs match exactly
+
+SUBSYTEM=="usb", ACTION=="add", ATTRS{idVendor}=="0b21", ATTRS{idProduct}=="0025", GROUP="usbtmc", MODE="0666"
+
+KERNEL=="usbtmc[0-9], GROUP="usbtmc", MODE="0666"
+KERNEL=="usbtmc*, GROUP="usbtmc", MODE="0666"
+
+
+to reload the rules do: 
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+now either reboot or unplug the device, then plug back in
+
+then can list the device permissions again with:
+la /dev/usbtmc0
+
+you can see owner changed to usbtmc
+
+
+
+
+daemon-reload
+
+

@@ -18,10 +18,12 @@ The following metrics may be calibrated:
 
 After calibration runs have been performed, the datalog files will be compiled into lookup tables. The data is sorted, filtered, and averaged to produce accurate LUT points. C code header files are created which contain all the LUT points. After all LUTs have been created, the LUT files are sent via SSH to the Pi being calibrated. Then the Pi DAQ firmware is compiled, with the new LUT files. Finally, the DAQ Server process on the Pi is started.
 
-to use this code, first make a dir for the repo, then clone the repo with:
-mkdir /home/pi/Cal_Station
-cd /home/pi/Cal_Station
-git clone https://github.com/johnpolakow/Blackbox_Calibration.git
+to use this code, first make a dir for the repo, then clone the repo with:  
+mkdir /home/pi/Cal_Station  
+cd /home/pi/Cal_Station  
+git clone https://github.com/johnpolakow/Blackbox_Calibration.git  
+
+
 there is a makefile present, to compile the code just type 'make':
 make
 

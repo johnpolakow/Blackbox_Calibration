@@ -31,10 +31,10 @@
 #include <iostream>
 
 #include "String_Tokenizer.h"
-#include "./StringH.h"
-#include "./colors.h"
+#include "StringH.h"
+#include "colors.h"
 
-#include "./FileH.h"
+#include "FileH.h"
 #include "DC_Segment.h"
 #include "LC_LUT.h"
 

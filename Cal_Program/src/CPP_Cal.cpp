@@ -45,6 +45,7 @@
 #include "Cal_Parameters.h"
 #include "colors.h"
 #include "Configure.h"
+#include "AutoCal.h"
 
 
 // External global variables. Defined in Cal_Parameters.cpp
@@ -77,15 +78,20 @@ void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP3
     Calibrate_Thermocouples(pi, FileWrite);                 
     printf(COLOR_BOLD_RED "\nTEST#1 REF100    1 minute\n\n" COLOR_RESET);
     Calibrate_REF100(HP34401A, HP34401B, FileWrite);
+
     printf(COLOR_BOLD_RED "\nTEST#2 DIODE VOLTS    40 minutes\n\n" COLOR_RESET);
+    Change_Cables_Diode_Volts();
     Calibrate_Diode_Volts(pi, HP34401A, E3648A, FileWrite); 
     usleep(ONE_MILLISECOND*1000);
     printf(COLOR_BOLD_RED "\nTEST#3 COOLER mA   8 minutes\n\n" COLOR_RESET);
     AC_Power_Calibration(pi, yokogawa, FileWrite);        
     usleep(ONE_MILLISECOND*1000);
+// cable change
+
     printf(COLOR_BOLD_RED "\nTEST#4 COOLER VDC  11 minutes\n\n" COLOR_RESET);
     Calibrate_Cooler_V_DC(pi, HP34401A, HP34401B, E3648A, FileWrite); 
     usleep(ONE_MILLISECOND*1000);
+// cable change
     printf(COLOR_BOLD_RED "\nTEST#5 COOLER mA   8 minutes\n\n" COLOR_RESET);
     AC_Power_Calibration(pi, yokogawa, FileWrite);
     printf(COLOR_BOLD_RED "\nTEST#6 REF100\n\n" COLOR_RESET);
@@ -102,9 +108,11 @@ void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP3
     AC_Power_Calibration(pi, yokogawa, FileWrite);
     usleep(ONE_MILLISECOND*1000);
     Calibrate_Thermocouples(pi, FileWrite);   
+// cable change
     printf(COLOR_BOLD_RED "\nTEST#9 COOLER VDC   11 minutes\n\n" COLOR_RESET);
     Calibrate_Cooler_V_DC(pi, HP34401A, HP34401B, E3648A, FileWrite);
     usleep(ONE_MILLISECOND*1000);
+// cable change
     printf(COLOR_BOLD_RED "\nTEST#10 COOLER mA   8 minutes\n\n" COLOR_RESET);
     AC_Power_Calibration(pi, yokogawa, FileWrite);
     usleep(ONE_MILLISECOND*1000);
@@ -117,6 +125,7 @@ void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP3
     printf(COLOR_BOLD_RED "\nTEST#13 LOAD INCREMENTS    25 minutes\n\n" COLOR_RESET);
     Calibrate_Load_Increments_Reverse(pi, HP34401A, HP34401B, DAC_INCREMENT+300, FileWrite);
     usleep(ONE_MILLISECOND*1000);
+// cable change
     printf(COLOR_BOLD_RED "\nTEST#14 DIODE VOLTS    40 minutes\n\n" COLOR_RESET);
     Calibrate_Diode_Volts(pi, HP34401A, E3648A, FileWrite);
     usleep(ONE_MILLISECOND*1000);
@@ -130,6 +139,7 @@ void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP3
     usleep(ONE_MILLISECOND*1000);
     printf(COLOR_BOLD_RED "\nTEST#17 LOAD INCREMENTS     25 minutes\n\n" COLOR_RESET);
     Calibrate_Load_Increments(pi, HP34401A, HP34401B, DAC_INCREMENT+500, FileWrite);
+// cable change
     printf(COLOR_BOLD_RED "\nTEST#18 COOLER VDC     11 minutes\n\n" COLOR_RESET);
     Calibrate_Cooler_V_DC(pi, HP34401A, HP34401B, E3648A, FileWrite);
 }
@@ -414,6 +424,9 @@ int main( int argc, char** argv )
               strcpy(HP34401A.model, dev->model);
               strcpy(HP34401A.manufacturer, dev->manufacturer);
               strcpy(HP34401A.meter_string, "HP34401A");    // description of meter for use in printf statements
+              HP34401A.configuration.meas_type = VOLTS_DC;
+              HP34401A.configuration.sample_count = 2;
+              HP34401A.configuration.sample_count = 5;
               Initialize_Meter(&HP34401A);
           }
           else if( StringH::String_Contains_Ignore_Case(ID, HP_B_ID))   // if the USB device matches the HP_B ID, which is "0,2-1-1"
@@ -424,6 +437,9 @@ int main( int argc, char** argv )
               strcpy(HP34401B.model, dev->model);
               strcpy(HP34401B.manufacturer, dev->manufacturer);
               strcpy(HP34401B.meter_string, "HP34401B");    // description of meter for use in printf statements
+              HP34401A.configuration.meas_type = VOLTS_DC;
+              HP34401A.configuration.sample_count = 2;
+              HP34401A.configuration.sample_count = 5;
               Initialize_Meter(&HP34401B);
           }
       }

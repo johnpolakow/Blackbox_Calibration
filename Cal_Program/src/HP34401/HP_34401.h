@@ -84,6 +84,20 @@ DISPlay
 //set trigger SOURCE// INIT
 // FETCH?
 
+typedef enum meas_t
+{
+    VOLTS_DC,
+    CURRENT_DC,
+} DC_MEAS;
+
+typedef struct meter_config_t
+{
+    int sample_count;
+    int num_triggers;
+    DC_MEAS meas_type;
+}Meter_Configuration;
+
+
 
 typedef struct meter_t
 {
@@ -97,6 +111,7 @@ typedef struct meter_t
     int sample_count;
     int trigger_count;
     int NPLC;
+    Meter_Configuration configuration;
 }Meter;
 
 // Function Declarations
@@ -132,6 +147,10 @@ void Set_Current_DC_NPLC(Meter* dmm, int num_cycles);
 void Configure_Volts_DC(Meter* dmm);
 void Configure_Current_DC(Meter* dmm);
 void HP34401_Reset(Meter* dmm);
+void HP34401_Verify_Buffer_Is_Empty(Meter* dmm);
+void HP34401_Clear_Error(Meter dmm);
+char* HP34401_Get_Meter_ID(Meter* dmm);
+void HP34401_Identify_Meter(Meter* dmm);
 Data_Group* HP34401_Average_10_DC_V_Samples(Meter* dmm);
 Data_Group* HP34401_Average_10_DC_mA_Samples(Meter* dmm);
 Data_Group* Parse_HP_Line(char* line_string);
@@ -166,6 +185,16 @@ void HP34401_Reset(Meter* dmm)
 {
     HP34401_Send_Command(*dmm, RESET);
     usleep(ONE_MILLISECOND*1000);
+}
+
+// Displays the ID string on the display of each meter
+void HP34401_Identify_Meter(Meter* dmm)
+{
+  char* ID1 = HP34401_Get_Meter_ID(dmm);
+  strcpy(dmm->meter_ID, ID1);
+  free(ID1);
+
+  HP34401_Display_Text(dmm, dmm->meter_ID);
 }
 
 void Set_Volts_DC_NPLC(Meter* dmm, int num_cycles)
@@ -206,6 +235,8 @@ void Configure_Current_DC(Meter* dmm)
 {
     printf("\tconfiguring " COLOR_MAGENTA "%s" COLOR_RESET " current measurements...\n", dmm->meter_string);
 
+    dmm->configuration.meas_type = CURRENT_DC;
+
     HP34401_Send_Command(*dmm, SET_CURRENT_DC );
     usleep(ONE_MILLISECOND*50);
 
@@ -216,6 +247,9 @@ void Configure_Current_DC(Meter* dmm)
 void Configure_Volts_DC(Meter* dmm)
 {
     printf("\tconfiguring " COLOR_MAGENTA "%s" COLOR_RESET " voltage measurements...\n", dmm->meter_string);
+
+    dmm->configuration.meas_type = VOLTS_DC;
+
     HP34401_Send_Command(*dmm, SET_VOLTS_DC );
     usleep(ONE_MILLISECOND*50);
 
@@ -231,15 +265,17 @@ void Setup_Trigger_10_samples(Meter* dmm)
     int samples_per_trigger = 2;
     char command[50];
     sprintf(command, "SAMPLE:COUNT %d", samples_per_trigger);     // take 3 samples per trigger
-    HP34401_Send_Command(*dmm, command );        // send command
+    HP34401_Send_Command(*dmm, command );                        // send command
     usleep(ONE_MILLISECOND*50);
     dmm->sample_count = samples_per_trigger;
+    dmm->configuration.sample_count = 2;
 
     int trigger_count = 5;
     sprintf(command, "TRIGGER:COUNT %d", trigger_count );     // set to 5 triggers total before returning to idle
-    HP34401_Send_Command(*dmm, command );          // send command
+    HP34401_Send_Command(*dmm, command );                     // send command
     usleep(ONE_MILLISECOND*50);
     dmm->trigger_count = trigger_count;
+    dmm->configuration.num_triggers = 5;
 }
 
 Data_Group* HP34401_Average_10_DC_V_Samples(Meter* dmm)
@@ -248,7 +284,7 @@ Data_Group* HP34401_Average_10_DC_V_Samples(Meter* dmm)
     usleep(ONE_MILLISECOND*50);
 
     // for 10 samples, get reliable reads with a 2900 ms time delay
-    usleep(ONE_MILLISECOND *3000);
+    usleep(ONE_MILLISECOND *3050);
     HP34401_Send_Command(*dmm, FETCH );  // send command
 
     char buffer[500];
@@ -275,7 +311,7 @@ Data_Group* HP34401_Average_10_DC_mA_Samples(Meter* dmm)
 
     // for 10 samples, get reliable reads with a 3000 ms time delay
     // this accounts for the time for meter to sample the data and then send
-    usleep(ONE_MILLISECOND *3000);
+    usleep(ONE_MILLISECOND *3050);
     HP34401_Send_Command(*dmm, FETCH );  // send command
 
     char buffer[500];
@@ -462,7 +498,78 @@ void HP34401_Print_Modem_Bits(int port_FD)
     return;
 }
 
+// returns HP34401A ID string. Memory for the string must be freed afterwards
+char* HP34401_Get_Meter_ID(Meter* dmm)
+{
+    HP34401_Send_Command(*dmm, GET_ID);
+    usleep(ONE_MILLISECOND*75); //Wait after sending
 
+    char response[255];
+    StringH::Erase_Num_Chars(response, 255);       // erase newly created buffer
+
+    HP34401_Read_Response(dmm, response);
+    // Example response:    HEWLETT-PACKARD,34401A,0,2-1-1
+
+    char delims[] = ",";    // delimiters to be used in parsing out tokens
+    char* token = strtok(response, delims);
+
+    if( token != NULL && strlen(token) > 0)
+    {
+        bool correct = StringH::String_Contains(token, "HEWLETT-PACKARD");
+        if(!correct)
+            printf("NOT CORRECT! %s does not match %s\n", token, "HEWLETT-PACKARD");
+
+        token = strtok(NULL, delims);
+        correct = StringH::String_Contains(token, "34401A");
+        if(!correct)
+            printf("NOT CORRECT! %s does not match %s\n", token, "34401A");
+
+        char* ID = (char*)malloc( sizeof(char) * 15); // ID actually should only be 7 characters long
+        StringH::Erase_Num_Chars(ID, 10);
+
+        token = strtok(NULL, delims);
+        strncpy(ID, token, 2);
+        char comma[] = ",";
+        strcat(ID, comma);
+
+        token = strtok(NULL, delims);
+        strcat(ID, token);
+
+        int meter_number = parse_USB_Number(dmm->device_path);
+        printf("\tHP34401 ID%d: " COLOR_MAGENTA "\t%s" COLOR_RESET, meter_number, ID);
+
+        return ID;
+    }
+    else
+        printf("Could not read response from HP meter.\n");
+}
+
+void HP34401_Clear_Error(Meter dmm)
+{
+    char err_str[100];
+    StringH::Erase_Num_Chars(err_str, 100);
+    sprintf(err_str, "\tresetting %s to clear error condition.\n", dmm.meter_string);
+    fputs(err_str, stderr);
+    HP34401_Reset(&dmm);
+    usleep(1000);
+    HP34401_Identify_Meter(&dmm);
+
+    if( dmm.configuration.meas_type == VOLTS_DC)
+    {
+        Configure_Volts_DC(&dmm); 
+        usleep(10000);
+        Setup_Trigger_10_samples(&dmm);
+        usleep(10000);
+    }
+
+    if( dmm.configuration.meas_type == CURRENT_DC)
+    {
+        Configure_Current_DC(&dmm); 
+        usleep(10000);
+        Setup_Trigger_10_samples(&dmm);
+        usleep(10000);
+    }
+}
 
 int HP34401_Send_Command(Meter dmm, const char* command_string)
 {
@@ -476,8 +583,10 @@ int HP34401_Send_Command(Meter dmm, const char* command_string)
 
     num_written = write(port_FD, write_string, strlen(write_string) );
     if (num_written < 0)
-        fputs("write() to HP34401 failed!\n", stderr);
-
+    {
+        fputs("write() to HP34401 failed!\t in ::HP34401A_Send_Command\n", stderr);
+        HP34401_Clear_Error(dmm);
+    }
 
     char dev_path[50];
     strcpy(dev_path, dmm.device_path);
@@ -525,8 +634,8 @@ int parse_USB_Number(char* path)
 float HP34401_Measure_Volts_DC(Meter dmm)
 {
 
-    char buffer[255];
-    StringH::Erase_Num_Chars(buffer, 255);
+    char buffer[512];
+    StringH::Erase_Num_Chars(buffer, 512);
 
     HP34401_Send_Command(dmm, "MEAS:VOLT:DC?");
     usleep(ONE_MILLISECOND*100); //Wait after sending
@@ -670,10 +779,22 @@ int HP34401_Get_Num_Chars_Waiting(int port_FD)
     return bytes_ready;
 }
 
-void HP34401_Read_Response(Meter* dmm, char* response_string)
+void HP34401_Verify_Buffer_Is_Empty(Meter* dmm)
 {
     char buff[255];
-    for(int i = 0; i< 255; ++i)
+    usleep(1*ONE_MILLISECOND);
+    int bytes_ready = HP34401_Get_Num_Chars_Waiting(dmm->file_descriptor);
+    if( bytes_ready > 0 )
+    {
+        read(dmm->file_descriptor, buff, 255);
+    }
+}
+
+
+void HP34401_Read_Response(Meter* dmm, char* response_string)
+{
+    char buff[512];
+    for(int i = 0; i< 512; ++i)
         buff[i] = '\0';     // have to do this otherwise characters from other loop iterations are printed
 
     int bytes_ready = HP34401_Get_Num_Chars_Waiting(dmm->file_descriptor);
@@ -683,15 +804,25 @@ void HP34401_Read_Response(Meter* dmm, char* response_string)
         if( !(HP34401_Get_Num_Chars_Waiting(dmm->file_descriptor) > 0) )
         {
             HP34401_Send_Command(*dmm, FETCH );  // send command
+            usleep(ONE_MILLISECOND*50);
         }
+        int num_timeouts = 0; 
         while( !(HP34401_Get_Num_Chars_Waiting(dmm->file_descriptor) > 0) )
         {
             printf("waiting another 500 ms for response from HP34401\n");
             usleep(ONE_MILLISECOND*500);
+            ++num_timeouts;
+            if( num_timeouts >= 2 && !(HP34401_Get_Num_Chars_Waiting(dmm->file_descriptor) > 0))
+            {
+                HP34401_Clear_Error(*dmm);
+                response_string[0] = '\0';
+                response_string[1] = '\0';
+                return;
+            }
         }
     }
 
-    int num_read = read(dmm->file_descriptor, buff, 255);
+    int num_read = read(dmm->file_descriptor, buff, 512);
     if( num_read > 0 )
     {
         if( DEBUG )

@@ -31,11 +31,11 @@
 #include <iostream>
 
 #include "String_Tokenizer.h"
-#include "./Data_Segment.h"
-#include "./DC_Data.h"
-#include "./StringH.h"
-#include "./colors.h"
-#include "./FileH.h"
+#include "Data_Segment.h"
+#include "DC_Data.h"
+#include "StringH.h"
+#include "colors.h"
+#include "FileH.h"
 #include "Cal_Parameters.h"
 
 #define MAX_DC_LUT_POINTS      500

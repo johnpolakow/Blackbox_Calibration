@@ -7,14 +7,13 @@
 #include "./HP34401/HP_34401.h"
 #include "./E3648A/E36468.h"
 #include "./HP34401/HP_Measurement_Functions.h"
-//#include "Cal_Points.h"
-//#include "BK5335.h"
-#include "./AC_Data.h"
-#include "./LUT.h"
+#include "AC_Data.h"
+#include "LUT.h"
 #include "./Util/Write_Log.h"
-#include "./Menu.h"
+#include "Menu.h"
 #include "Cal_Parameters.h"
 #include "./Yokogawa/WT300E.h"
+#include "DC_Data.h"
 
 extern double DCV_Set_Points[];
 extern double Diode_Cal_Points[];
@@ -23,14 +22,14 @@ extern double Diode_Cal_Points[];
 extern "C" {
 #endif
 
-void Clear_Console_Screen();
-void Calibrate_Load_Increments(PI* pi, Meter* dmm_A, Meter* dmm_B, int DAC_INCREMENT, Write_Log* FileWrite);
-void Calibrate_REF100(Meter* HP34401A, Meter* HP34401B, Write_Log* FileWrite);
-void Prompt_User_Message(char* message);
-void Calibrate_Cooler_V_DC(PI* pi, Meter* HP34401A, Meter* HP34401B, PowerSupply* E3648A, Write_Log* FileWrite);
-void AC_Power_Calibration(PI* pi, WT300E* yokogawa, Write_Log* FileWrite);
-void Calibrate_Diode_Volts(PI* pi, Meter* HP34401A, PowerSupply* E3648A, Write_Log* FileWrite);
-void Calibrate_Thermocouples(PI* pi, Write_Log* FileWrite);
+
+void Auto_Calibrate_Load_Increments(PI* pi, Meter* dmm_A, Meter* dmm_B, int DAC_INCREMENT, Write_Log* FileWrite);
+void Auto_Calibrate_REF100(Meter* HP34401A, Meter* HP34401B, Write_Log* FileWrite);
+void Auto_Calibrate_Cooler_V_DC(PI* pi, Meter* HP34401A, Meter* HP34401B, PowerSupply* E3648A, Write_Log* FileWrite);
+void Auto_AC_Power_Calibration(PI* pi, WT300E* yokogawa, Write_Log* FileWrite);
+void Auto_Calibrate_Diode_Volts(PI* pi, Meter* HP34401A, PowerSupply* E3648A, Write_Log* FileWrite);
+void Auto_Calibrate_Thermocouples(PI* pi, Write_Log* FileWrite);
+void Change_Cables_Diode_Volts();
 
 
 
@@ -47,7 +46,7 @@ void Calibrate_Thermocouples(PI* pi, Write_Log* FileWrite);
 // in a loop, DAC is incremented, PI measures voltage and current, HP meters measure voltage and current
 // the measured values are aggregated, written to file, and then continue to next DAC increment value
 // When complete DAC is set to zero (load current source turned off)
-void Calibrate_Load_Increments(PI* pi, Meter* HP34401A, Meter* HP34401B, int DAC_INCREMENT, Write_Log* FileWrite)
+void Auto_Calibrate_Load_Increments(PI* pi, Meter* HP34401A, Meter* HP34401B, int DAC_INCREMENT, Write_Log* FileWrite)
 {
     char pi_string[5000];
 
@@ -120,9 +119,6 @@ void Calibrate_Load_Increments(PI* pi, Meter* HP34401A, Meter* HP34401B, int DAC
     pi->Set_Read_Seq_Load_OFF( );
     pi->Cal_Mode_OFF();
 
-    HP34401_Verify_Buffer_Is_Empty(HP34401A);
-    HP34401_Verify_Buffer_Is_Empty(HP34401B);
-    
     usleep(ONE_MILLISECOND);
     Reset_All_Relays(false);
     Menu::Clear_Console_Screen();
@@ -130,7 +126,7 @@ void Calibrate_Load_Increments(PI* pi, Meter* HP34401A, Meter* HP34401B, int DAC
 
 
 
-void Calibrate_Load_Increments_Reverse(PI* pi, Meter* HP34401A, Meter* HP34401B, int DAC_INCREMENT, Write_Log* FileWrite)
+void Auto_Calibrate_Load_Increments_Reverse(PI* pi, Meter* HP34401A, Meter* HP34401B, int DAC_INCREMENT, Write_Log* FileWrite)
 {
     char pi_string[5000];
 
@@ -201,9 +197,6 @@ void Calibrate_Load_Increments_Reverse(PI* pi, Meter* HP34401A, Meter* HP34401B,
     pi->Set_Read_Seq_Load_OFF( );
     pi->Cal_Mode_OFF();
 
-    HP34401_Verify_Buffer_Is_Empty(HP34401A);
-    HP34401_Verify_Buffer_Is_Empty(HP34401B);
-
     usleep(ONE_MILLISECOND);
     Reset_All_Relays(false);
     Menu::Clear_Console_Screen();
@@ -222,12 +215,11 @@ void Calibrate_REF100(Meter* HP34401A, Meter* HP34401B, Write_Log* FileWrite)
     Data::Print_DataGroup(REF100_uA);                               // defined in Data_Helper.h
     FileWrite->Write_REF100_Data(REF100_uA);                                  
     usleep(ONE_MILLISECOND);
-    HP34401_Verify_Buffer_Is_Empty(HP34401B);
     Reset_All_Relays(false);
     printf("Measurement Complete.\n\n");
 }
 
-void Calibrate_Thermocouples(PI* pi, Write_Log* FileWrite)
+void Auto_Calibrate_Thermocouples(PI* pi, Write_Log* FileWrite)
 {
     printf(COLOR_LIGHT_MAGENTA "\n\t\tCAL THERMOCOUPLES\n" COLOR_RESET);
     printf("\ttaking 10 samples for each thermocouple\n\n");
@@ -264,7 +256,7 @@ void Calibrate_Thermocouples(PI* pi, Write_Log* FileWrite)
 // PI measures the voltage, HP34401_B meter measures the voltage as well
 // the measured values are written to file
 // continue to next volt calibration point
-void Calibrate_Cooler_V_DC(PI* pi, Meter* HP34401A, Meter* HP34401B, PowerSupply* E3648A, Write_Log* FileWrite)
+void Auto_Calibrate_Cooler_V_DC(PI* pi, Meter* HP34401A, Meter* HP34401B, PowerSupply* E3648A, Write_Log* FileWrite)
 {
 
     printf(COLOR_LIGHT_MAGENTA "\n\n\t## Cooler Voltage CAL:  read Cool_V ##\n\n" COLOR_RESET);
@@ -273,7 +265,6 @@ void Calibrate_Cooler_V_DC(PI* pi, Meter* HP34401A, Meter* HP34401B, PowerSupply
     printf("\t\tConnect banana jumpers " COLOR_RED "\tPI_DAQ" COLOR_RESET " --> " COLOR_RED " Cal Box J24/J25\n" COLOR_RESET);
     printf("\t\tConnect banana jumpers " COLOR_RED "\tHP_B" COLOR_RESET " --> " COLOR_RED " Cal Box J24/J25\n" COLOR_RESET);
 
-    Menu::Wait_Enter();
     pi->Cal_Mode_ON();           // "CAL ON"
     pi->Relay_OFF();            // "CAL_RELAY_OFF"
 
@@ -330,7 +321,6 @@ void Calibrate_Cooler_V_DC(PI* pi, Meter* HP34401A, Meter* HP34401B, PowerSupply
     /*
         INSTRUCT USER TO TURN PS OFF
     */
-    HP34401_Verify_Buffer_Is_Empty(HP34401B);
     printf(COLOR_BRIGHT_MAGENTA "DCV CAL LOOP COMPLETE.\nTURNING AUXILIARY PS OFF\n" COLOR_RESET);
     Set_Volts(E3648A, 0.00);     // set output voltage of power supply to 0 
     Set_Output_OFF(E3648A);     // turn output of power supply off
@@ -342,7 +332,7 @@ void Calibrate_Cooler_V_DC(PI* pi, Meter* HP34401A, Meter* HP34401B, PowerSupply
 }
 
 
-void AC_Power_Calibration(PI* pi, WT300E* yokogawa, Write_Log* FileWrite)
+void Auto_AC_Power_Calibration(PI* pi, WT300E* yokogawa, Write_Log* FileWrite)
 {
     bool cooled_down = false;
     bool cooler_power_on = false;
@@ -350,7 +340,7 @@ void AC_Power_Calibration(PI* pi, WT300E* yokogawa, Write_Log* FileWrite)
     int seconds_since_logging = 0;
     int secs_since_reached_setpoint = 0;
 
-    Menu::Wait_Enter();
+    //Menu::Wait_Enter();
 
     if( !yokogawa->Is_Connected() )
     {
@@ -455,6 +445,18 @@ void AC_Power_Calibration(PI* pi, WT300E* yokogawa, Write_Log* FileWrite)
 }
 
 
+
+
+void Change_Cables_Diode_Volts()
+{
+    printf("\t\t-- Connect banana jumpers " COLOR_RED "\tE3648A Output 1" COLOR_RESET " --> " COLOR_RED " Cal Box J17/J20 --\n" COLOR_RESET);
+    Menu::Wait_Enter();
+}
+
+
+
+
+
 // This function calibrates the PI measured diode volts, to actual cooler volts (as measured by HP34401_B)
 // The voltage is calibrated at many specific DC volt values, specified by array DCV_Set_Points[], which is in "Cal_Points.h"
 //
@@ -466,12 +468,11 @@ void AC_Power_Calibration(PI* pi, WT300E* yokogawa, Write_Log* FileWrite)
 // PI measures the voltage, HP34401_B meter measures the voltage as well
 // the measured values are written to file
 // continue to next volt calibration point
-void Calibrate_Diode_Volts(PI* pi, Meter* HP34401A, PowerSupply* E3648A, Write_Log* FileWrite)
+void Auto_Calibrate_Diode_Volts(PI* pi, Meter* HP34401A, PowerSupply* E3648A, Write_Log* FileWrite)
 {
     printf(COLOR_LIGHT_MAGENTA "\n\n\t## Diode Voltage CAL:  read diode V w/ HP_A and PI_DAQ  ##\n" COLOR_RESET);
-    printf("\t\tConnect banana jumpers " COLOR_RED "\tE3648A Output 1" COLOR_RESET " --> " COLOR_RED " Cal Box J17/J20\n" COLOR_RESET);
-    printf("\t\tConnect Cal Box" COLOR_RED "\tDB9 cable" COLOR_RESET " --> " COLOR_RED " PI DB9 Header\n" COLOR_RESET);
-    Menu::Wait_Enter();
+
+    // Menu::Wait_Enter();
     pi->Cal_Mode_ON();              // "CAL ON"
     pi->Relay_OFF();                // "CAL_RELAY_OFF"
     pi->Set_Read_Seq_Load_OFF();   //   "LOOP2" 
@@ -524,7 +525,6 @@ void Calibrate_Diode_Volts(PI* pi, Meter* HP34401A, PowerSupply* E3648A, Write_L
     /*
         INSTRUCT USER TO TURN PS OFF
     */
-    HP34401_Verify_Buffer_Is_Empty(HP34401A);
     printf(COLOR_BRIGHT_MAGENTA "DIODE V CAL LOOP COMPLETE.\nTURNING AUXILIARY PS OFF\n" COLOR_RESET);
     Set_Volts(E3648A, 0.00);     // set output voltage of power supply to 0 
     Set_Output_OFF(E3648A);     // turn output of power supply off

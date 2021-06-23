@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "system_error": "c",
-        "cmath": "cpp",
-        "complex": "cpp",
-        "iostream": "cpp"
-    }
-}

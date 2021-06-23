@@ -80,19 +80,26 @@ void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP3
     Calibrate_REF100(HP34401A, HP34401B, FileWrite);
 
     printf(COLOR_BOLD_RED "\nTEST#2 DIODE VOLTS    40 minutes\n\n" COLOR_RESET);
+// cable change
     Change_Cables_Diode_Volts();
     Calibrate_Diode_Volts(pi, HP34401A, E3648A, FileWrite); 
     usleep(ONE_MILLISECOND*1000);
     printf(COLOR_BOLD_RED "\nTEST#3 COOLER mA   8 minutes\n\n" COLOR_RESET);
     AC_Power_Calibration(pi, yokogawa, FileWrite);        
     usleep(ONE_MILLISECOND*1000);
-// cable change
+
 
     printf(COLOR_BOLD_RED "\nTEST#4 COOLER VDC  11 minutes\n\n" COLOR_RESET);
+// cable change
+    Change_Cables_Cooler_V_DC();
     Calibrate_Cooler_V_DC(pi, HP34401A, HP34401B, E3648A, FileWrite); 
     usleep(ONE_MILLISECOND*1000);
-// cable change
+
+
+
     printf(COLOR_BOLD_RED "\nTEST#5 COOLER mA   8 minutes\n\n" COLOR_RESET);
+// cable change
+    Change_Cables_Cooler_mA();
     AC_Power_Calibration(pi, yokogawa, FileWrite);
     printf(COLOR_BOLD_RED "\nTEST#6 REF100\n\n" COLOR_RESET);
     usleep(ONE_MILLISECOND*1000);
@@ -108,39 +115,58 @@ void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP3
     AC_Power_Calibration(pi, yokogawa, FileWrite);
     usleep(ONE_MILLISECOND*1000);
     Calibrate_Thermocouples(pi, FileWrite);   
-// cable change
+
+
     printf(COLOR_BOLD_RED "\nTEST#9 COOLER VDC   11 minutes\n\n" COLOR_RESET);
+// cable change
+    Change_Cables_Cooler_V_DC();
     Calibrate_Cooler_V_DC(pi, HP34401A, HP34401B, E3648A, FileWrite);
     usleep(ONE_MILLISECOND*1000);
-// cable change
+
+
     printf(COLOR_BOLD_RED "\nTEST#10 COOLER mA   8 minutes\n\n" COLOR_RESET);
+// cable change
+    Change_Cables_Cooler_mA();
     AC_Power_Calibration(pi, yokogawa, FileWrite);
     usleep(ONE_MILLISECOND*1000);
+
     printf(COLOR_BOLD_RED "\nTEST#11 LOAD INCREMENTS    25 minutes\n\n" COLOR_RESET);
     Calibrate_Load_Increments_Reverse(pi, HP34401A, HP34401B, DAC_INCREMENT+100, FileWrite);
     usleep(ONE_MILLISECOND*1000);
+
     printf(COLOR_BOLD_RED "\nTEST#12 LOAD INCREMENTS    25 minutes\n\n" COLOR_RESET);
     Calibrate_Load_Increments(pi, HP34401A, HP34401B, DAC_INCREMENT+200, FileWrite);
     usleep(ONE_MILLISECOND*1000);
+
     printf(COLOR_BOLD_RED "\nTEST#13 LOAD INCREMENTS    25 minutes\n\n" COLOR_RESET);
     Calibrate_Load_Increments_Reverse(pi, HP34401A, HP34401B, DAC_INCREMENT+300, FileWrite);
     usleep(ONE_MILLISECOND*1000);
-// cable change
+
+
     printf(COLOR_BOLD_RED "\nTEST#14 DIODE VOLTS    40 minutes\n\n" COLOR_RESET);
+// cable change
+    Change_Cables_Diode_Volts();
     Calibrate_Diode_Volts(pi, HP34401A, E3648A, FileWrite);
     usleep(ONE_MILLISECOND*1000);
     Calibrate_Thermocouples(pi, FileWrite);   
     usleep(ONE_MILLISECOND*1000);
+
     printf(COLOR_BOLD_RED "\nTEST#15 REF100\n\n" COLOR_RESET);
     Calibrate_REF100(HP34401A, HP34401B, FileWrite);
     usleep(ONE_MILLISECOND*1000);
+
     printf(COLOR_BOLD_RED "\nTEST#16 COOLER mA    8 minutes\n\n" COLOR_RESET);
+    Change_Cables_Cooler_mA();
     AC_Power_Calibration(pi, yokogawa, FileWrite);
     usleep(ONE_MILLISECOND*1000);
+
     printf(COLOR_BOLD_RED "\nTEST#17 LOAD INCREMENTS     25 minutes\n\n" COLOR_RESET);
     Calibrate_Load_Increments(pi, HP34401A, HP34401B, DAC_INCREMENT+500, FileWrite);
-// cable change
+
+
     printf(COLOR_BOLD_RED "\nTEST#18 COOLER VDC     11 minutes\n\n" COLOR_RESET);
+// cable change
+    Change_Cables_Cooler_V_DC();
     Calibrate_Cooler_V_DC(pi, HP34401A, HP34401B, E3648A, FileWrite);
 }
 

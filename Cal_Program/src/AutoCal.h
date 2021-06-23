@@ -24,12 +24,12 @@ extern "C" {
 
 
 void Auto_Calibrate_Load_Increments(PI* pi, Meter* dmm_A, Meter* dmm_B, int DAC_INCREMENT, Write_Log* FileWrite);
-void Auto_Calibrate_REF100(Meter* HP34401A, Meter* HP34401B, Write_Log* FileWrite);
 void Auto_Calibrate_Cooler_V_DC(PI* pi, Meter* HP34401A, Meter* HP34401B, PowerSupply* E3648A, Write_Log* FileWrite);
 void Auto_AC_Power_Calibration(PI* pi, WT300E* yokogawa, Write_Log* FileWrite);
 void Auto_Calibrate_Diode_Volts(PI* pi, Meter* HP34401A, PowerSupply* E3648A, Write_Log* FileWrite);
-void Auto_Calibrate_Thermocouples(PI* pi, Write_Log* FileWrite);
 void Change_Cables_Diode_Volts();
+void Change_Cables_Cooler_V_DC();
+void Change_Cables_Cooler_mA();
 
 
 
@@ -203,47 +203,8 @@ void Auto_Calibrate_Load_Increments_Reverse(PI* pi, Meter* HP34401A, Meter* HP34
 }
 
 
-void Calibrate_REF100(Meter* HP34401A, Meter* HP34401B, Write_Log* FileWrite)
-{
-    Menu::Clear_Console_Screen();
-    printf(COLOR_LIGHT_MAGENTA "\n\t##  REF100  ...steer 100uA source to HP34401_B ##\n\n" COLOR_RESET);
-    //printf(COLOR_BOLD_RED "\tIMPORTANT:\n" COLOR_RESET);
-    printf("\tConnect banana jumpers " COLOR_RED "\tJ25,J26" COLOR_RESET " --> " COLOR_RED " HP_B current terminal\n" COLOR_RESET);
-    printf("\tConnect DB9 header " COLOR_RED "\tcal box" COLOR_RESET " --> " COLOR_RED " PI DAQ\n\n" COLOR_RESET);
 
-    Data_Group* REF100_uA = Measure_REF100(HP34401A, HP34401B);     // defined in HP_Measurement_Functions.h
-    Data::Print_DataGroup(REF100_uA);                               // defined in Data_Helper.h
-    FileWrite->Write_REF100_Data(REF100_uA);                                  
-    usleep(ONE_MILLISECOND);
-    Reset_All_Relays(false);
-    printf("Measurement Complete.\n\n");
-}
 
-void Auto_Calibrate_Thermocouples(PI* pi, Write_Log* FileWrite)
-{
-    printf(COLOR_LIGHT_MAGENTA "\n\t\tCAL THERMOCOUPLES\n" COLOR_RESET);
-    printf("\ttaking 10 samples for each thermocouple\n\n");
-
-    pi->Cal_Mode_OFF();         // turn PI_DUT "Calibration Mode" off to receive complete responses
-    pi->Verbose_Mode_OFF();     // turn PI_DUT "Verbose Mode" off. 
-
-    Thermocouple_Data* therm_samples = new Thermocouple_Data();
-
-    for(int i = 0; i<10; ++i)
-    {
-        char* read_string = pi->Read_Metrics();
-        therm_samples->Add_Sample(read_string);
-        free(read_string);
-
-        usleep(1000*1000);  // 1 second between readings
-    }
-
-    therm_samples->Print_Thermcouple_Data();
-
-    FileWrite->Write_Thermocouple_Data(therm_samples);
-    delete therm_samples;
-    printf("\n\tMeasurement Complete.\n\n");
-}
 
 // This function calibrates the PI measured cooler DC volts, to actual cooler volts (as measured by HP34401_B)
 // The voltage is calibrated at many specific DC volt values, specified by array DCV_Set_Points[], which is in "Cal_Points.h"
@@ -443,16 +404,6 @@ void Auto_AC_Power_Calibration(PI* pi, WT300E* yokogawa, Write_Log* FileWrite)
     // take out of cal mode
     // free any memory
 }
-
-
-
-
-void Change_Cables_Diode_Volts()
-{
-    printf("\t\t-- Connect banana jumpers " COLOR_RED "\tE3648A Output 1" COLOR_RESET " --> " COLOR_RED " Cal Box J17/J20 --\n" COLOR_RESET);
-    Menu::Wait_Enter();
-}
-
 
 
 

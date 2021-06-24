@@ -63,10 +63,11 @@ git clone https://github.com/johnpolakow/Blackbox_Calibration.git
 
 https://github.com/johnpolakow/Blackbox_Calibration/tree/main/md
 
-![alt text](https://github.com/johnpolakow/Blackbox_Calibration/tree/main/md/compile01.png?raw=true)
+![alt text](./md/compile/compile01.png?raw=true)
+![plot](./md/compile/compile01.png)
 
 there is a makefile present, to compile the code just type 'make':  
-![alt text](https://github.com/johnpolakow/Blackbox_Calibration/blob/main/md/compile02.png?raw=true)
+![alt text](https://github.com/johnpolakow/Blackbox_Calibration/blob/main/md/compile/compile02.png?raw=true)
 
 
 modules will be succesively compiled. If you're doing it from the Pi, it will take 2-3 minutes to finish compiling. Required libraries to compile this code are:

@@ -60,8 +60,10 @@ then clone the repo with:
 ```
 git clone https://github.com/johnpolakow/Blackbox_Calibration.git  
 ```
-after cloning, the following files should be present:  
-![alt text](https://github.com/johnpolakow/Blackbox_Calibration/blob/main/md/compile01.png?raw=true)
+
+https://github.com/johnpolakow/Blackbox_Calibration/tree/main/md
+
+![alt text](https://github.com/johnpolakow/Blackbox_Calibration/tree/main/md/compile01.png?raw=true)
 
 there is a makefile present, to compile the code just type 'make':  
 ![alt text](https://github.com/johnpolakow/Blackbox_Calibration/blob/main/md/compile02.png?raw=true)

@@ -1,6 +1,12 @@
 # Blackbox_Calibration
 
-This program runs on the Relay Calibration Box (on a Raspberry Pi). This program performs the following tasks:
+This application is used to calibrate the Raspberry Pi based DAQ, which datalogs metrics for coolers. This application runs on Raspberry Pi, which is used to control relays, test equipment, and the Raspberry Pi being calibrated. The Raspberry Pi this application runs on is housed inside a 'Calibration Relay Box', which multiplexes different signals to the meters to be tested. A diagram of the setup:
+
+
+
+
+
+This program performs the following tasks:
 searches local Ethernet network for attached Raspberry Pis to calibrate
 connects to and controls the following test equipment
   - HP34401A x 2

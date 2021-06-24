@@ -55,16 +55,19 @@ to use this code, first make a dir for the repo:
 ```
 mkdir /home/pi/Cal_Station  
 cd /home/pi/Cal_Station  
-
+```
 then clone the repo with:  
+```
 git clone https://github.com/johnpolakow/Blackbox_Calibration.git  
 ```
+after cloning, the following files should be present:  
+![alt text](https://github.com/johnpolakow/Blackbox_Calibration/blob/main/md/compile01.png?raw=true)
 
-there is a makefile present, to compile the code just type 'make':
-make
+there is a makefile present, to compile the code just type 'make':  
+![alt text](https://github.com/johnpolakow/Blackbox_Calibration/blob/main/md/compile02.png?raw=true)
 
-a number of modules will be succesively compiled. If you're doing it from the Pi, it will take 2-3 minutes to finish compiling. Required libraries to compile this code are:
-   - m (math)
+
+modules will be succesively compiled. If you're doing it from the Pi, it will take 2-3 minutes to finish compiling. Required libraries to compile this code are:
    - bcm2835 (raspberry pi gpio library)
    - ssh (libssh, a library for ssh access. See folder 'libssh_install_notes' for instructions on compiling libssh on the pi from source
 

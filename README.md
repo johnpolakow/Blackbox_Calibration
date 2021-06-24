@@ -3,8 +3,8 @@
 - [Blackbox_Calibration](#blackbox_calibration)
   - [PROGRAM OVERVIEW](#program-overview)
   - [DOWNLOADING CODE & COMPILING](#downloading-code--compiling)
-  - [Pi DUT connection:](#pi-dut-connection)
-  - [Program Start:](#program-start)
+  - [Pi DUT CONNECTION:](#pi-dut-connection)
+  - [PROGRAM START:](#program-start)
   - [MENU STRUCTURE](#menu-structure)
   - [CALIBRATION PI DIRECTORY STRUCTURE](#calibration-pi-directory-structure)
   - [DUT PI DIRECTORY STRUCTURE](#dut-pi-directory-structure)
@@ -61,7 +61,7 @@ then clone the repo with:
 ```git clone https://github.com/johnpolakow/Blackbox_Calibration.git```    
 
 
-The following files should now be present in the directory:
+The following files should now be present in the directory:   
 ![plot](./md/compile/compile01.png)
 
 As seen above there is a makefile. To compile the code just type 'make':  
@@ -70,35 +70,39 @@ As seen above there is a makefile. To compile the code just type 'make':
 
 
 
-modules will be succesively compiled. If you're doing it from the Pi, it will take 2-3 minutes to finish compiling. Required libraries to compile this code are:
+modules will be succesively compiled. On the Pi, it will take 2-3 minutes to finish compiling. Required libraries to compile this code are:
    - [BCM2835](https://www.airspayce.com/mikem/bcm2835/) (Raspberry Pi gpio library)
    - [libssh](https://www.libssh.org/)  ...library for ssh access. See [libssh install notes](./md/libssh_install.md) to compile on Pi from source
 
 after the calibration program has built successfully, a creatively named binary, '**cal**', is produced. 
-to execute the code, simply type: ./cal  
+to execute the code, simply type: 
+```./cal  ```
 Note: do not use sudo to execute. It is not necessary, and application will look in the wrong directory for ssh keys if run as root user.
 
-## Pi DUT connection:
+## Pi DUT CONNECTION:
 the Pi unit to be calibrated needs to connect to the Pi residing in the calibration box, via Ethernet cable. The subnet for this network is 192.168.123.XXX
 The default IP for the calibration box Pi is 192.168.123.7
 
-## Program Start:
+## PROGRAM START:
 First the application searches the local Ethernet connection for any Raspberry Pis. If found it will show the IP and MAC of the Pi it is connecting to. If the PI DAQ server process is running, a message will be displayed showing "PI HOST IS UP". Also shown will be the directory of where log files are stored (on the Calibration Box Pi). Each Pi has its data saved in a folder identified by its MAC address:
-[](./md/start/start01.png)
+![plot](./md/start/start01.png)
 
 Next the application will try to connect to the 4 pieces of test equipment:
    - 2x HP34401 6.5 digit DMM
    - Agilent E3648A Power Supply   
 Any USB attached devices which support SCPI are queried. Their SCPI ID string is displayed in the program (indicated by red arrows below) 
 See [Test Equipment](./md/test_equipment.md) page for more information if you are having difficulty connecting
-[](./md/start/start02.png)
+![plot](./md/start/start02.png)
 
-Last it will try to locate the Yokogawa WT310E on the /dev/usbtmc interface:
-[](./md/start/start03.png)
+Last the application will try to locate the Yokogawa WT310E on the ***/dev/usbtmc*** interface:
+![plot](./md/start/start03.png)
 
-If the application is unable to find all 4 pieces of test equipment, the program quits. Something to keep in mind:
-the application identifies the HP meters and Agilent Power Supply via their individual ID#. This is the value returned by executing the SCPI query: \*IDN?
-over RS232 or gpib. Why this is important: if you use a physically different HP34401 meter or Agilent E3648 power supply, they will not be identified correctly. The ID# is shown in the image above. If you need to change the ID# this application is looking for, adjust the following strings in Cal_Parameters.cpp:
+If the application is unable to find all 4 pieces of test equipment, the program exits.   
+
+Something to keep in mind:
+the application identifies the HP meters and Agilent Power Supply by their individual SCPI ID. This is the value returned by executing the SCPI query: \*IDN?
+over RS232 or gpib.   
+Why this is important: if you use a physically different HP34401 meter or Agilent E3648 power supply, they will not be identified correctly. The ID# is shown in the image above. If you need to change the ID# this application is looking for, adjust the following strings in Cal_Parameters.cpp:
 ```
 const char* HP_A_ID = "0,11-5-2";  
 const char* HP_B_ID = "0,2-1-1";  
@@ -115,28 +119,28 @@ If all test equipment is detected correctly, the application proceeds to the mai
 There is the option to perform calibration automatically or manually. Manual calibration is somewhat a misnomer, the calibration is still automatic is just entails selecting the individual calibration programs to run. There is no manual data collection necessary. 
 
 If manual calibration is selected, the following menu is displayed:
-[](./md/start/menu_cal.png)
+![plot](./md/start/menu_cal.png)
 the estimated time to complete each calibration program is listed.
 when you are finished running cal items, then select done (7)
 
 Next the LUT menu is displayed:
-[](./md/start/LUT_menu.png)
+![plot](./md/start/LUT_menu.png)
 On the right side, the log files available for processing into LUTs are shown. The log files are stored on the calibration Pi in the directory:
 ```/home/pi/CAL_LOGS/[DUT_MAC_ADDR]/```. 
 
 Here is an example processing the COOLER_V.log file. The file is parsed. The read file and target LUT file locations are shown. 
 The data is scanned in and outlier points discarded.
-[](./md/LUT/Process_CoolV.png)
+![plot](./md/LUT/Process_CoolV.png)
  
 Data is grouped by similar values, and then averaged to produce LUT points:
-[](./md/LUT/Process_CoolV2.png)
+![plot](./md/LUT/Process_CoolV2.png)
  
 The LUT is produced into a C .h header file, and stored locally in ```/home/pi/CAL_LUT/[DUT_MAC_ADDR]/```:
-[](./md/LUT/Process_CoolV3.png)
+![plot](./md/LUT/Process_CoolV3.png)
 
 
 After a log file is processed into a LUT, the log file is moved to ```/home/pi/CAL_LOGS/PROCESSED_LOGS/[DUT_MAC_ADDR]/```
-[](./md/dir/processed_log.png)
+![plot](./md/dir/processed_log.png)
 
 
 

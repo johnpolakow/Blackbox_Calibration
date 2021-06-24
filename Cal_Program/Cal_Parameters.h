@@ -74,31 +74,24 @@ extern const char* DIODE_V_TEMP_LUT;
 //      if a point added to the group causes the group to exceed this value, the point is not added
 #define MAX_SPAN_PERCENT_AVERAGE 1
 
-// the max span of the data group (highest-lowest) as a percentage of the average value
+// the max span of Load Voltage the data group (highest-lowest) as a percentage of the average value of the group
 #define MAX_LOAD_V_SPAN_PERCENT_AVERAGE 0.75
-
-// the max span of the data group (highest-lowest) as a percentage of the average value
-#define MAX_COOLER_V_SPAN_PERCENT_AVERAGE 0.75
 
 // max standard deviation for the points in DAC count group
 #define MAX_COUNT_STD_DEV      100
 
 #define MAX_DATA_POINT_VARIANCE 2       // max percentage variance for 1 sec in 10 seconds of sampling
 
+// the max span of the DC Cooler Voltage data group (highest-lowest) as a percentage of the average value
+#define MAX_COOLER_V_SPAN_PERCENT_AVERAGE 0.75
 
+
+// Parameters that apply to Cooler mA measurements as it is driving the Compressor
 // max percentage correction between pi and meter. The values may vary per data set
 #define MAX_PERCENT_CORRECTION_UNDER_300_MILLIAMPS 7
 #define MAX_PERCENT_CORRECTION_OVER_300_UNDER_600_MILLIAMPS 6
 #define MAX_PERCENT_CORRECTION_UNDER_1000_MILLIAMPS 7
 
 //////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
 
 #endif

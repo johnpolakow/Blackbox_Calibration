@@ -1,6 +1,6 @@
 
-#ifndef _CALIBRATE_H
-#define _CALIBRATE_H
+#ifndef _AUTO_CALIBRATE_H
+#define _AUTO_CALIBRATE_H
 
 #include "./PI/Pi.h"
 #include "Data.h"

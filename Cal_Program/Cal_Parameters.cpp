@@ -33,7 +33,7 @@ const char* DAQ_PROCESS_SERVICE_NAME = "Blackberry.service";
 // Defined here are different DAC counts to increment by, when calibrating the mapping of Dac_count to PI Load mA out
 const int DAC_INCREMENT = 200;
 
-// these are the calibration points for the PI metric measuring the CCC Voltage
+// these are the calibration points for the PI DAQ measuring the output voltage to the CCC
 double DCV_Set_Points[] = { 0.1, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10.5,
                             10.75, 11, 11.25, 11.5, 11.75, 11.9, 12, 12.05, 12.1,
                             12.15, 12.2, 12.25, 12.3, 12.35, 12.4, 12.45, 12.5,

@@ -1,13 +1,45 @@
 # Blackbox_Calibration
 
-This application is used to calibrate the Raspberry Pi based DAQ, which datalogs metrics for coolers. This application runs on Raspberry Pi, which is used to control relays, test equipment, and the Raspberry Pi being calibrated. The Raspberry Pi this application runs on is housed inside a 'Calibration Relay Box', which multiplexes different signals to the meters to be tested. A diagram of the setup:
+This application is used to calibrate the Raspberry Pi based DAQ, which datalogs metrics for coolers. This application runs on Raspberry Pi, which is used to control relays, test equipment, and the Raspberry Pi being calibrated. The Raspberry Pi this application runs on is housed inside a 'Calibration Relay Box', which multiplexes different signals to the meters to be tested. 
+
+The test equipment used is:
+[img]
 
 
 
 
+A diagram of the setup:
 
-This program performs the following tasks:
-searches local Ethernet network for attached Raspberry Pis to calibrate
+[img]
+
+
+[ PROGRAM OVERVIEW ]
+
+The application performs the following tasks:
+  - searches local Ethernet network for attached Raspberry Pis
+  - finds a Raspberry Pi to calibrate, and connects to it
+  - searches the linux device tree for attached USB test equipment
+  - connects to and configures the test equipment
+  - runs calibration tests, controlling relays to direct signals to the meters
+  - writes the test data to log files
+  
+After Calibration Runs have been completed, the application processes the log files into LUTs:
+  - parses the log files
+  - throws out outlier data
+  - sorts data into groups of similar values
+  - filters out data with high variance
+  - averages data groups into look up table points
+  - writes the LUT points to a C header file, which is usable by the DUT
+
+Finally, the application connects to the DUT, and writes the LUT files
+ - connects to the DUT via SSH
+ - writes the LUT files
+ - installs libbcm2835 if necessary
+ - compiles the Pi DAQ firmware with the new LUT files
+ - starts the PI DAQ server
+ - verifies the server process is operating correctly
+
+  
 connects to and controls the following test equipment
   - HP34401A x 2
   - Yokogawa WT310E

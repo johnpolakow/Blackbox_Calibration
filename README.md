@@ -1,5 +1,12 @@
 # Blackbox_Calibration
 
+- [Blackbox_Calibration](#blackbox_calibration)
+  - [PROGRAM OVERVIEW](#program-overview)
+  - [DOWNLOADING CODE & COMPILING](#downloading-code--compiling)
+  - [Pi DUT connection:](#pi-dut-connection)
+  - [Program Start:](#program-start)
+  - [PROGRAM OPERATION](#program-operation)
+
 This application is used to calibrate the Raspberry Pi based DAQ, which datalogs metrics for coolers. This application runs on Raspberry Pi, which is used to control relays, test equipment, and the Raspberry Pi being calibrated. The Raspberry Pi this application runs on is housed inside a 'Calibration Relay Box', which multiplexes different signals to the meters to be tested. 
 
 The test equipment used is:
@@ -13,7 +20,7 @@ A diagram of the setup:
 [img]
 
 
-[ PROGRAM OVERVIEW ]
+## PROGRAM OVERVIEW
 
 The application performs the following tasks:
   - searches local Ethernet network for attached Raspberry Pis
@@ -40,28 +47,18 @@ Finally, the application connects to the DUT, and writes the LUT files
  - verifies the server process is operating correctly
 
   
-connects to and controls the following test equipment
-  - HP34401A x 2
-  - Yokogawa WT310E
-  - Agilent E3648A
+After calibration runs have been performed, the datalog files will be compiled into lookup tables. The data is sorted, filtered, and averaged to produce accurate LUT points. C code header files are created which contain the LUT points. After all LUTs have been created, the LUT files are sent via SSH to the Pi being calibrated. 
+The Pi DAQ firmware is compiled, with the new LUT files. Finally, the DAQ Server process on the Pi is started.
 
-Calibration can be manual or Automated
-The following metrics may be calibrated:
-  - AC Cooler Current
-  - DC Volts to Cooler
-  - Diode Volts
-  - Diode Current
-  - Load Resistor Voltage
-  - Load Resistor Current
-
-After calibration runs have been performed, the datalog files will be compiled into lookup tables. The data is sorted, filtered, and averaged to produce accurate LUT points. C code header files are created which contain all the LUT points. After all LUTs have been created, the LUT files are sent via SSH to the Pi being calibrated. Then the Pi DAQ firmware is compiled, with the new LUT files. Finally, the DAQ Server process on the Pi is started.
-
-## Downloading Code and Compiling
-to use this code, first make a dir for the repo, then clone the repo with:  
+## DOWNLOADING CODE & COMPILING
+to use this code, first make a dir for the repo:
+```
 mkdir /home/pi/Cal_Station  
 cd /home/pi/Cal_Station  
-git clone https://github.com/johnpolakow/Blackbox_Calibration.git  
 
+then clone the repo with:  
+git clone https://github.com/johnpolakow/Blackbox_Calibration.git  
+```
 
 there is a makefile present, to compile the code just type 'make':
 make
@@ -121,3 +118,11 @@ There is the option to perform calibration automatically or manually. Manual cal
 
 
 
+Calibration can be manual or Automated
+The following metrics may be calibrated:
+  - AC Cooler Current
+  - DC Volts to Cooler
+  - Diode Volts
+  - Diode Current
+  - Load Resistor Voltage
+  - Load Resistor Current

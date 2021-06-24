@@ -25,8 +25,8 @@
 #include <sys/ioctl.h>
 
 
-#include "Struct_Defs.h"
-#include "StringH.h"
+#include "../Util/Struct_Defs.h"
+#include "../Util/StringH.h"
 #include "Pi_Socket.h"
 #include "TimeH.h"
 #include "Test.h"

@@ -7,10 +7,10 @@
 #include <iostream>
 #include <fstream>
 
-#include "FileH.h"
-#include "StringH.h"
-#include "systemd.h"
-#include "Cal_Parameters.h"
+#include "../Util/FileH.h"
+#include "../Util/StringH.h"
+#include "../SSH/systemd.h"
+#include "../../Cal_Parameters.h"
 
 
 class SSH_Helper

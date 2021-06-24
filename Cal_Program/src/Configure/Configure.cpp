@@ -1,8 +1,3 @@
-
-
-
-
-
 #include "Configure.h"
 
 bool Configure::Check_bcm2835_Lib_Installed()

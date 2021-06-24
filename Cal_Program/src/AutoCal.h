@@ -32,6 +32,31 @@ void Change_Cables_Cooler_V_DC();
 void Change_Cables_Cooler_mA();
 
 
+void Change_Cables_Diode_Volts()
+{
+    printf(COLOR_LIGHT_MAGENTA "\n\n\t## Diode Voltage CAL:  read diode V w/ HP_A and PI_DAQ  ##\n" COLOR_RESET);
+    printf("\t\tConnect banana jumpers " COLOR_BOLD_RED "\tE3648A Output 1" COLOR_RESET " --> " COLOR_BOLD_RED " Cal Box J17/J20\n" COLOR_RESET);
+    printf("\t\tConnect Cal Box" COLOR_RED "\tDB9 cable" COLOR_RESET " --> " COLOR_RED " PI DB9 Header\n" COLOR_RESET);
+    Menu::Wait_Enter();
+}
+
+void Change_Cables_Cooler_V_DC()
+{
+    printf(COLOR_LIGHT_MAGENTA "\n\n\t## Cooler Voltage CAL:  read Cool_V ##\n\n" COLOR_RESET);
+    printf("\t\tConnect banana jumpers " COLOR_BOLD_RED "\tE3648A Output 1" COLOR_RESET " --> " COLOR_BOLD_RED " Cal Box J24/J25\n" COLOR_RESET);
+    printf("\t\tConnect banana jumpers " COLOR_BOLD_RED "\tPI_DAQ" COLOR_RESET " --> " COLOR_BOLD_RED " Cal Box J24/J25\n" COLOR_RESET);
+    printf("\t\tConnect banana jumpers " COLOR_BOLD_RED "\tHP_B" COLOR_RESET " --> " COLOR_BOLD_RED " Cal Box J24/J25\n" COLOR_RESET);
+    Menu::Wait_Enter();
+}
+
+void Change_Cables_Cooler_mA()
+{
+    printf(COLOR_LIGHT_MAGENTA "\n\n\t## Cooler AC Current CAL:  read Cool_mA ##\n\n" COLOR_RESET);
+    printf("\t\tConnect banana jumpers " COLOR_RED "\tYokogawa" COLOR_RESET " --> " COLOR_RED " Cal Box J3/J6\n" COLOR_RESET);
+    printf("\t\tConnect banana jumpers " COLOR_RED "\tFL100" COLOR_RESET " --> " COLOR_RED " Cal Box J5/J7\n" COLOR_RESET);
+    Menu::Wait_Enter();
+}
+
 
 // This function calibrates these mappings:
 //      PI_DAQ count -> actual Load mA out  (as measured by HP34401B)
@@ -311,7 +336,6 @@ void Auto_AC_Power_Calibration(PI* pi, WT300E* yokogawa, Write_Log* FileWrite)
         return;
     }
 
-
     pi->Cal_Mode_ON();
     pi->Relay_OFF();
     pi->Set_Read_Seq_POWER_CALIBRATION();
@@ -327,13 +351,8 @@ void Auto_AC_Power_Calibration(PI* pi, WT300E* yokogawa, Write_Log* FileWrite)
 
     AC_Data_Group* Yokogawa_AC_Data = new AC_Data_Group("Yokogawa AC Current", "mA");
     printf(COLOR_LIGHT_MAGENTA "\t##  COOLER AC CURRENT CAL  ##\n\n" COLOR_RESET);
-    printf(COLOR_BOLD_RED "\tIMPORTANT:\n" COLOR_RESET);
-    printf("\t\tConnect banana jumpers " COLOR_RED "\tYokogawa" COLOR_RESET " --> " COLOR_RED " Cal Box J3/J6\n" COLOR_RESET);
-    printf("\t\tConnect banana jumpers " COLOR_RED "\tFL100" COLOR_RESET " --> " COLOR_RED " Cal Box J5/J7\n" COLOR_RESET);
     printf("\n\twaiting to turn on cooler power\n\t");
 
-    
-    
     bool seen_mA_above_450 = false;
     bool seen_mA_below_100 = false;
 

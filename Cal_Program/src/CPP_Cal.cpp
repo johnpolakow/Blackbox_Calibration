@@ -29,6 +29,7 @@
 
 #include "PI/Pi.h"
 
+#include "AutoCal.h"
 #include "HP34401/HP_34401.h"
 #include "PI/relay.h"
 #include "HP34401/HP_Measurement_Functions.h"
@@ -45,25 +46,18 @@
 #include "Cal_Parameters.h"
 #include "colors.h"
 #include "Configure.h"
-#include "AutoCal.h"
+
 
 
 // External global variables. Defined in Cal_Parameters.cpp
 extern const char* HP_A_ID;
 extern const char* HP_B_ID;
 extern const int DAC_INCREMENT;
+const char* serverPort = DEFAULT_SERVER_PORT;
 
-// TODO
-// pdf report of each metric calibrated
-// need menus that popup for different cabling configurations required for each test
-// diode cal lut needs to go out to 5 decimal places
-// set IP Address of CAL PI to static
-// 
-//  check Ip address of cal PI
 
 void Upload_Cal_Files();
-
-const char* serverPort = DEFAULT_SERVER_PORT;
+void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP34401B, PowerSupply* E3648A, Write_Log* FileWrite);
 
 void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP34401B, PowerSupply* E3648A, Write_Log* FileWrite)
 {
@@ -82,71 +76,69 @@ void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP3
     printf(COLOR_BOLD_RED "\nTEST#2 DIODE VOLTS    40 minutes\n\n" COLOR_RESET);
 // cable change
     Change_Cables_Diode_Volts();
-    Calibrate_Diode_Volts(pi, HP34401A, E3648A, FileWrite); 
+    Auto_Calibrate_Diode_Volts(pi, HP34401A, E3648A, FileWrite); 
     usleep(ONE_MILLISECOND*1000);
     printf(COLOR_BOLD_RED "\nTEST#3 COOLER mA   8 minutes\n\n" COLOR_RESET);
-    AC_Power_Calibration(pi, yokogawa, FileWrite);        
+    Auto_AC_Power_Calibration(pi, yokogawa, FileWrite);        
     usleep(ONE_MILLISECOND*1000);
 
 
     printf(COLOR_BOLD_RED "\nTEST#4 COOLER VDC  11 minutes\n\n" COLOR_RESET);
 // cable change
     Change_Cables_Cooler_V_DC();
-    Calibrate_Cooler_V_DC(pi, HP34401A, HP34401B, E3648A, FileWrite); 
+    Auto_Calibrate_Cooler_V_DC(pi, HP34401A, HP34401B, E3648A, FileWrite);
     usleep(ONE_MILLISECOND*1000);
-
 
 
     printf(COLOR_BOLD_RED "\nTEST#5 COOLER mA   8 minutes\n\n" COLOR_RESET);
 // cable change
     Change_Cables_Cooler_mA();
-    AC_Power_Calibration(pi, yokogawa, FileWrite);
+    Auto_AC_Power_Calibration(pi, yokogawa, FileWrite);
     printf(COLOR_BOLD_RED "\nTEST#6 REF100\n\n" COLOR_RESET);
     usleep(ONE_MILLISECOND*1000);
     Calibrate_REF100(HP34401A, HP34401B, FileWrite);
     usleep(ONE_MILLISECOND*1000);
     printf(COLOR_BOLD_RED "\nTEST#7 LOAD INCREMENTS   25 minutes\n\n" COLOR_RESET);
-    Calibrate_Load_Increments(pi, HP34401A, HP34401B, DAC_INCREMENT, FileWrite); // load mA & V calibration point every 500 counts
+    Auto_Calibrate_Load_Increments(pi, HP34401A, HP34401B, DAC_INCREMENT, FileWrite); // load mA & V calibration point every 500 counts
     usleep(ONE_MILLISECOND*1000);
     Calibrate_Thermocouples(pi, FileWrite);                
  
     usleep(ONE_MILLISECOND*1000);
     printf(COLOR_BOLD_RED "\nTEST#8 COOLER mA  8 minutes\n\n" COLOR_RESET);
-    AC_Power_Calibration(pi, yokogawa, FileWrite);
+    Auto_AC_Power_Calibration(pi, yokogawa, FileWrite);
     usleep(ONE_MILLISECOND*1000);
     Calibrate_Thermocouples(pi, FileWrite);   
-
 
     printf(COLOR_BOLD_RED "\nTEST#9 COOLER VDC   11 minutes\n\n" COLOR_RESET);
 // cable change
     Change_Cables_Cooler_V_DC();
-    Calibrate_Cooler_V_DC(pi, HP34401A, HP34401B, E3648A, FileWrite);
+    Auto_Calibrate_Cooler_V_DC(pi, HP34401A, HP34401B, E3648A, FileWrite);
     usleep(ONE_MILLISECOND*1000);
 
 
     printf(COLOR_BOLD_RED "\nTEST#10 COOLER mA   8 minutes\n\n" COLOR_RESET);
 // cable change
     Change_Cables_Cooler_mA();
-    AC_Power_Calibration(pi, yokogawa, FileWrite);
+    Auto_AC_Power_Calibration(pi, yokogawa, FileWrite);
     usleep(ONE_MILLISECOND*1000);
 
     printf(COLOR_BOLD_RED "\nTEST#11 LOAD INCREMENTS    25 minutes\n\n" COLOR_RESET);
-    Calibrate_Load_Increments_Reverse(pi, HP34401A, HP34401B, DAC_INCREMENT+100, FileWrite);
+    Auto_Calibrate_Load_Increments_Reverse(pi, HP34401A, HP34401B, DAC_INCREMENT+100, FileWrite);
     usleep(ONE_MILLISECOND*1000);
 
     printf(COLOR_BOLD_RED "\nTEST#12 LOAD INCREMENTS    25 minutes\n\n" COLOR_RESET);
-    Calibrate_Load_Increments(pi, HP34401A, HP34401B, DAC_INCREMENT+200, FileWrite);
+    Auto_Calibrate_Load_Increments(pi, HP34401A, HP34401B, DAC_INCREMENT+200, FileWrite);
     usleep(ONE_MILLISECOND*1000);
 
     printf(COLOR_BOLD_RED "\nTEST#13 LOAD INCREMENTS    25 minutes\n\n" COLOR_RESET);
-    Calibrate_Load_Increments_Reverse(pi, HP34401A, HP34401B, DAC_INCREMENT+300, FileWrite);
+    Auto_Calibrate_Load_Increments_Reverse(pi, HP34401A, HP34401B, DAC_INCREMENT+300, FileWrite);
     usleep(ONE_MILLISECOND*1000);
 
 
     printf(COLOR_BOLD_RED "\nTEST#14 DIODE VOLTS    40 minutes\n\n" COLOR_RESET);
 // cable change
     Change_Cables_Diode_Volts();
-    Calibrate_Diode_Volts(pi, HP34401A, E3648A, FileWrite);
+    Auto_Calibrate_Diode_Volts(pi, HP34401A, E3648A, FileWrite);
     usleep(ONE_MILLISECOND*1000);
     Calibrate_Thermocouples(pi, FileWrite);   
     usleep(ONE_MILLISECOND*1000);
@@ -156,18 +148,16 @@ void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP3
     usleep(ONE_MILLISECOND*1000);
 
     printf(COLOR_BOLD_RED "\nTEST#16 COOLER mA    8 minutes\n\n" COLOR_RESET);
-    Change_Cables_Cooler_mA();
-    AC_Power_Calibration(pi, yokogawa, FileWrite);
+    Auto_AC_Power_Calibration(pi, yokogawa, FileWrite);
     usleep(ONE_MILLISECOND*1000);
 
     printf(COLOR_BOLD_RED "\nTEST#17 LOAD INCREMENTS     25 minutes\n\n" COLOR_RESET);
-    Calibrate_Load_Increments(pi, HP34401A, HP34401B, DAC_INCREMENT+500, FileWrite);
-
+    Auto_Calibrate_Load_Increments(pi, HP34401A, HP34401B, DAC_INCREMENT+500, FileWrite);
 
     printf(COLOR_BOLD_RED "\nTEST#18 COOLER VDC     11 minutes\n\n" COLOR_RESET);
 // cable change
     Change_Cables_Cooler_V_DC();
-    Calibrate_Cooler_V_DC(pi, HP34401A, HP34401B, E3648A, FileWrite);
+    Auto_Calibrate_Cooler_V_DC(pi, HP34401A, HP34401B, E3648A, FileWrite);
 }
 
 void Manual_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP34401B, PowerSupply* E3648A, Write_Log* FileWrite)

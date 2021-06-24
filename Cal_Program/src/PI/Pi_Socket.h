@@ -21,10 +21,10 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#include "StringH.h"
+#include "../Util/StringH.h"
 #include "Network.h"
-#include "Net_Interface.h"
-#include "SSH_Helper.h"
+#include "../SSH/Net_Interface.h"
+#include "../SSH/SSH_Helper.h"
 
 
 extern bool SEND_FLAG;

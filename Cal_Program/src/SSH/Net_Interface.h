@@ -22,9 +22,9 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 
-#include "StringH.h"
-#include "colors.h"
-#include "Cal_Parameters.h"
+#include "../Util/StringH.h"
+#include "../Util/colors.h"
+#include "../../Cal_Parameters.h"
 
 const char IFACE_SEARCH_ETHERNET[] =  "sudo arp-scan --localnet -g -I eth0 | grep \"Raspberry\"";
 const char IFACE_SEARCH_WIFI[] = "sudo arp-scan --localnet -g -I wlan0 | grep -e 'Raspberry'\0";

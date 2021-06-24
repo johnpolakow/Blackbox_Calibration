@@ -15,7 +15,8 @@
 #include <signal.h>
 #include <assert.h>
 #include <sys/time.h>
-#include "colors.h"
+
+#include "../Util/colors.h"
 
 #define ERR_CLIENT_SOCKET_CREATE 	1
 #define ERR_ETH_CONN_FAILED			2	// couldnt connect over the network

@@ -1,14 +1,17 @@
 # Blackbox_Calibration
 
 - [Blackbox_Calibration](#blackbox_calibration)
-  - [PROGRAM OVERVIEW](#program-overview)
-  - [DOWNLOADING CODE & COMPILING](#downloading-code--compiling)
-  - [Pi DUT CONNECTION:](#pi-dut-connection)
-  - [PROGRAM START:](#program-start)
-  - [MENU STRUCTURE](#menu-structure)
-  - [CALIBRATION PI DIRECTORY STRUCTURE](#calibration-pi-directory-structure)
-  - [DUT PI DIRECTORY STRUCTURE](#dut-pi-directory-structure)
-  - [PROGRAM OPERATION](#program-operation)
+  - [Program Overview](#program-overview)
+  - [Downloading Code and Compiling](#downloading-code-and-compiling)
+  - [Pi DUT Connection:](#pi-dut-connection)
+  - [Program Start:](#program-start)
+  - [Menu Structure](#menu-structure)
+  - [SSH File Upload and BCM2835 Installation](#ssh-file-upload-and-bcm2835-installation)
+  - [Calibration Pi Directory Structure](#calibration-pi-directory-structure)
+  - [DUT Pi Directory Structure](#dut-pi-directory-structure)
+  - [LUT Production inputs:](#lut-production-inputs)
+  - [LUT Production Outputs:](#lut-production-outputs)
+  - [Cal_Parameters.h, Cal_Parameters.cpp](#cal_parametersh-cal_parameterscpp)
 
 This application is used to calibrate the Raspberry Pi based DAQ, which datalogs metrics for coolers. This application runs on Raspberry Pi, which is used to control relays, test equipment, and the Raspberry Pi being calibrated. The Raspberry Pi this application runs on is housed inside a 'Calibration Relay Box', which multiplexes different signals to the meters to be tested. 
 
@@ -20,7 +23,7 @@ The communication setup:
 [](./md/test_setup.png)
 A USB Hub can be used to connect all USB devices, then the Pi can be connected to the hub.
 
-## PROGRAM OVERVIEW
+## Program Overview
 
 The application performs the following tasks:
   - searches local Ethernet network for attached Raspberry Pis
@@ -50,7 +53,7 @@ Finally, the application connects to the DUT, and writes the LUT files
 The datalog files will be compiled into lookup tables. The data is sorted, filtered, and averaged to produce accurate LUT points. C code header files are produced which contain the LUT points. After all LUTs have been created, the LUT files are transferred via SSH to the Pi being calibrated. 
 The Pi DAQ firmware is then compiled remotely, with the new LUT files. Finally, the DAQ Server process on the Pi is initiated.
 
-## DOWNLOADING CODE & COMPILING
+## Downloading Code and Compiling
 to use this code, first make a dir for the repo:
 ```
 mkdir /home/pi/Cal_Station  
@@ -62,7 +65,7 @@ then clone the repo with:
 
 
 The following files should now be present in the directory:   
-![plot](./md/compile/compile01.png)
+![plot](./md/dir/dir00.png)
 
 As seen above there is a makefile. To compile the code just type 'make':  
 ![plot](./md/compile/compile02.png)  
@@ -79,17 +82,18 @@ to execute the code, simply type:
 ***```./cal  ```***
 Note: do not use sudo to execute. It is not necessary, and application will look in the wrong directory for ssh keys if run as root user.
 
-## Pi DUT CONNECTION:
+## Pi DUT Connection:
 the Pi unit to be calibrated needs to connect to the Pi residing in the calibration box, via Ethernet cable. The subnet for this network is 192.168.123.XXX
 The default IP for the calibration box Pi is 192.168.123.7
 
-## PROGRAM START:
+## Program Start:
 First the application searches the local Ethernet connection for any Raspberry Pis. If found it will show the IP and MAC of the Pi it is connecting to. If the PI DAQ server process is running, a message will be displayed showing "PI HOST IS UP". Also shown will be the directory of where log files are stored (on the Calibration Box Pi). Each Pi has its data saved in a folder identified by its MAC address:
 ![plot](./md/start/start01.png)
 
 Next the application will try to connect to the 4 pieces of test equipment:
    - 2x HP34401 6.5 digit DMM
    - Agilent E3648A Power Supply   
+
 Any USB attached devices which support SCPI are queried. Their SCPI ID string is displayed in the program (indicated by red arrows below) 
 See [Test Equipment](./md/test_equipment.md) page for more information if you are having difficulty connecting   
 ![plot](./md/start/start02.png)   
@@ -115,7 +119,7 @@ This is used during auto detection of pis connected to the network. It is necess
 
 If all test equipment is detected correctly, the application proceeds to the main menu.
 
-## MENU STRUCTURE
+## Menu Structure
 There is the option to perform calibration automatically or manually. Manual calibration is somewhat a misnomer, the calibration is still automatic is just entails selecting the individual calibration programs to run. There is no manual data collection necessary. 
 
 If manual calibration is selected, the following menu is displayed:
@@ -125,53 +129,72 @@ when you are finished running cal items, then select done (7)
 
 Next the LUT menu is displayed:
 ![plot](./md/start/LUT_Menu.png)   
-On the right side, the log files available for processing into LUTs are shown. The log files are stored on the calibration Pi in the directory:
+On the right side, the log files available for processing into LUTs are shown. The log files are stored on the calibration Pi in the directory:   
 ```/home/pi/CAL_LOGS/[DUT_MAC_ADDR]/```
 
-Here is an example processing the ***COOLER_V.log** file. The file is parsed. The read file and target LUT file locations are shown. 
+Here is an example processing the **COOLER_V.log** file. The file is parsed. The read file and target LUT file locations are shown.  
 The data is scanned in and outlier points discarded.   
 ![plot](./md/LUT/Process_CoolV.png)   
  
-Data is grouped by similar values, and averaged to produce LUT points:    
+Data is grouped by similar values, and averaged to produce LUT points:      
 ![plot](./md/LUT/Process_CoolV2.png)    
  
-The LUT is produced into a C .h header file, and stored locally in ```/home/pi/CAL_LUT/[DUT_MAC_ADDR]/```
+The LUT is produced into a C .h header file, and stored locally in ```/home/pi/CAL_LUT/[DUT_MAC_ADDR]/```    
 ![plot](./md/LUT/Process_CoolV3.png)    
 
 
-After processing into a LUT, the log file is moved to ```/home/pi/CAL_LOGS/PROCESSED_LOGS/[DUT_MAC_ADDR]/```   
+After processing into a LUT, the log file is moved to ```/home/pi/CAL_LOGS/PROCESSED_LOGS/[DUT_MAC_ADDR]/```    
 ![plot](./md/dir/processed_log.png)   
 
 
 
-## CALIBRATION PI DIRECTORY STRUCTURE
-
-## DUT PI DIRECTORY STRUCTURE
-
-
-## PROGRAM OPERATION
-
-Menus:
+## SSH File Upload and BCM2835 Installation
 
 
 
 
 
+## Calibration Pi Directory Structure   
+three important home folders on the Pi are: CAL_LOGS, CAL_LUT, and Cal_Station:   
+![plot](./md/home_folders.png)   
+
+Cal_Station contains the calibration src files and binary. The src/ file list is extensive:  
+![plot](./md/src_01.png)    
+![plot](./md/src_02.png)   
+![plot](./md/src_03.png)   
+89 source files!
+
+The CAL_LOGS/ directory contains data files gathered during calibration. They are organized by MAC address of the PI DAQ being calibrated:  
+![plot](./md/logs_proc.png)  
+you can see in the above image, the log files have already been scraped for data and converted into LUTs (they have been moved to the processed logs directory)
+If needed, the logs can be manually moved back to the unprocessed log folder. Also note: the REF100 log and Thermocouple log are never processed into LUTs. They are kept for performance verification.
+
+The CAL_LUT/ directory:
+![plot](./md/lut_files.png) 
+
+## DUT Pi Directory Structure
 
 
+## LUT Production inputs:
+ - COOLER_mA.log
+ - COOLER_V.log
+ - DIODE_V.log
+ - LOAD_mA.log
+ - LOAD_V.log
 
-Calibration can be manual or Automated
-The following metrics may be calibrated:
-  - AC Cooler Current
-  - DC Volts to Cooler
-  - Diode Volts
-  - Diode Current
-  - Load Resistor Voltage
-  - Load Resistor Current
+some example log files are [here](./md/example_logs/)
+
+## LUT Production Outputs:
+ - COOLER_mA_LUT.h
+ - COOLER_V_LUT.h
+ - DIODE_V_LUT.h
+ - LOAD_mA_LUT.h
+ - LOAD_V_LUT.h
 
 
+## Cal_Parameters.h, Cal_Parameters.cpp
 
-There are other string definitions in the Cal_Parameters.cpp file, it is probably best to avoid making changes. The lcoations of various directories are defined.
+There are other string definitions in the Cal_Parameters.cpp file, it is probably best to avoid making changes. The locations of various directories are defined.
 DC Voltage Points are also defined for the diode calibration, and for calibration of the PI DAQ output voltage measurement (to CCC).
 
 In Cal_Parameters.h are some parameters that adjust how data is filtered and grouped into lookup tables. Some of these apply to different LUTs that are created. 

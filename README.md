@@ -4,7 +4,7 @@
   - [Program Overview](#program-overview)
   - [Required Libraries](#required-libraries)
   - [Downloading Code and Compiling](#downloading-code-and-compiling)
-  - [Giving Pi User Permission to Access Devices Connected to **/dev/ttyUSB** & **/dev/usbtmc**](#giving-pi-user-permission-to-access-devices-connected-to-devttyusb--devusbtmc)
+  - [Giving Pi User Permission to Access **/dev/ttyUSB** & **/dev/usbtmc**](#giving-pi-user-permission-to-access-devttyusb--devusbtmc)
   - [Pi DUT Connection:](#pi-dut-connection)
   - [Program Start:](#program-start)
   - [Menu Structure](#menu-structure)
@@ -14,6 +14,14 @@
   - [LUT Production inputs:](#lut-production-inputs)
   - [LUT Outputs:](#lut-outputs)
   - [Cal_Parameters.h, Cal_Parameters.cpp](#cal_parametersh-cal_parameterscpp)
+  - [Instructions For Use](#instructions-for-use)
+    - [First Iteration of Cal Routines in Automatic Calibration](#first-iteration-of-cal-routines-in-automatic-calibration)
+      - [Thermocouple Measurement](#thermocouple-measurement)
+      - [REF100 Current Measurement](#ref100-current-measurement)
+      - [Diode Voltage Measurement and Calibration](#diode-voltage-measurement-and-calibration)
+      - [AC Current Measurement](#ac-current-measurement)
+      - [Pi DAQ Output Voltage Calibration](#pi-daq-output-voltage-calibration)
+      - [Pi DAQ Load Current Calibration](#pi-daq-load-current-calibration)
 
 This application is used to calibrate the Raspberry Pi based DAQ, which datalogs metrics for coolers. This application runs on Raspberry Pi, which is used to control relays, test equipment, and the Raspberry Pi being calibrated. The Raspberry Pi this application runs on is housed inside a 'Calibration Relay Box', which multiplexes different signals to the meters to be tested. 
 
@@ -73,7 +81,7 @@ sudo make check
 sudo make install   
 ```
 
-libssh is also required to automatically transfer the LUT files to the Pi DUT. As of right now there isnt an up to date libssh package available for the Raspberry Pi. To use this library the source files needs to be downloaded and then compiled. I ran into some obastacles doing this, see instructions on how compile 
+**libssh** is also required to automatically transfer the LUT files to the Pi DUT. As of right now there is not an up to date **libssh** package available for the Raspberry Pi. To use this library the source files needs to be downloaded and compiled. I ran into some difficulties doing this, see instructions on how to compile 
 libssh [here](./md/libssh_install.md)   
 
 ## Downloading Code and Compiling
@@ -102,7 +110,7 @@ to execute the code, simply type:
 ***```./cal  ```***
 Note: do not use sudo to execute. It is not necessary, and application will look in the wrong directory for ssh keys if run as root user. See next section for giving permissions to the pi user for accessing /dev/ttyUSB and /dev/usbtmc devices
 
-## Giving Pi User Permission to Access Devices Connected to **/dev/ttyUSB** & **/dev/usbtmc**
+## Giving Pi User Permission to Access **/dev/ttyUSB** & **/dev/usbtmc**
 
 First, the pi user must be in the following groups:
   - pi  
@@ -122,17 +130,19 @@ To see what groups the pi user is in, enter the command ``groups``
 To add the pi user to a group (in this case to the dialout group) enter the command:   
 ``sudo usermod -a -G dialout pi``
 
-verify the pi user belongs to the above groups. Next, some rules need to be set that give groups permission to access /dev/ttyUSB. The rule files needed are included with this repo, in the **etc/** folder:   
+verify the pi user belongs to the above groups. Add pi to any groups if necessary.   
+
+Next, some rules must be set that give groups permission to access /dev/ttyUSB. The rule files needed are included with this repo, in the **etc/** folder:   
    - 99-com.rules   
    - 70-ttyUSB.rules   
    - 11-yokogawa-wt310e.rules   
 
-Move them to the correct folder on the pi with this command:   
+Move these three files to the /etc/udev/rules.d/ directory on the pi with this command:   
 ```sudo mv *.rules /etc/udev/rules.d/```
 
-those three files should now be in the /etc/udev/rules.d/ directory
+Those three files should now be in the /etc/udev/rules.d/ directory
 
-next, create a new group usbtmc:   
+Next, create a new group usbtmc:   
 ```sudo groupadd usbtmc```    
 
 Add pi user to the group:   
@@ -140,27 +150,29 @@ Add pi user to the group:
 ![plot](./md/rules.d/group_add.png)  
 
 list the current owner and group of usbtmc0:    
-```la /dev/usbtmc0```
-![plot](./md/rules.d/la_usbtmc0.png)  
+```la /dev/usbtmc0```    
+![plot](./md/rules.d/la_usbtmc0.png)    
+
 
 It still belongs to the root user and group. To update, we need to reload the rules. Enter the commands:
-```   
-sudo udevadm control --reload-rules   
-sudo udevadm trigger  
-```   
+```sudo udevadm control --reload-rules```
+sudo udevadm trigger```   
 ![plot](./md/rules.d/udevadm.png)  
 
-to give the devices the new permissions, either unplug the device USB, then plug back in, or reboot the Pi. (sudo reboot -h now)
-
+to give the devices the new permissions, either unplug the device USB, then plug back in, or reboot the Pi.   
+(sudo reboot -h now)
 check the permissions to the usbtmc devices again and see if you now have access:
 ![plot](./md/rules.d/check_perm_usbtmc_again.png)  
+you can see above that /dev/usbtmc0 belongs to the usbtmc group
 
+Creating A Rules File
 If you don't have the '11-yokogawa-wt310e.rules' file, it can be created. change directories to **/etc/udev/rules.d/**
 
-find out what the device manufacturer and id are with the lsusb command:
+find out what the device manufacturer and id are, of the USB attached test equipment,  with the lsusb command:
 ```sudo lsusb```
-![plot](./md/rules.d/vi.png)  
+![plot](./md/rules.d/lsusb.png)  
 here we see the device manufacturer and ID for the Yokogawa is 0b21 & 0025. Remember these values 
+
 
 Now create the new rules file. enter the command:
 ```sudo vi 11-yokogawa-wt310e.rules```
@@ -261,16 +273,16 @@ After processing into a LUT, the log file is moved to ```/home/pi/CAL_LOGS/PROCE
 
 ## Calibration Pi Directory Structure   
 Important home folders on the (Calibration Box) Pi are: CAL_LOGS, CAL_LUT, and Cal_Station:   
-![plot](./md/home_folders.png)   
+![plot](./md/dir/home_folders.png)   
 
 **Cal_Station/** contains the calibration program source files and binary. The **src/** file list is extensive:  
-![plot](./md/src_01.png)    
-![plot](./md/src_02.png)   
-![plot](./md/src_03.png)   
+![plot](./md/dir/src_01.png)    
+![plot](./md/dir/src_02.png)   
+![plot](./md/dir/src_03.png)   
 89 source files!
 
 **CAL_LOGS/** contains data files gathered during calibration. They are organized by MAC address of the PI DAQ being calibrated:  
-![plot](./md/logs_proc.png)  
+![plot](./md/dir/logs_proc.png)  
 you can see in the above image, the log files have already been scraped for data and converted into LUTs (they have been moved to the processed logs directory).  
 If needed, the logs can be manually moved back to the unprocessed log folder. Also note: the REF100 log and Thermocouple log are never processed into LUTs. They are kept for performance verification.
 
@@ -313,3 +325,102 @@ There are other string definitions in the Cal_Parameters.cpp file, it is probabl
 DC Voltage Points are also defined for the diode calibration, and for calibration of the PI DAQ output voltage measurement (to CCC).
 
 In Cal_Parameters.h are some parameters that adjust how data is filtered and grouped into lookup tables. Some of these apply to different LUTs that are created. 
+
+## Instructions For Use
+Compile the Calibration Code as outlined earlier.  
+Connect a Pi DAQ to be calibrated (DUT Pi), via Ethernet cable, to the the Calibration Box. Verify the Pi DAQ has an IP Address in the   
+range of 192.168.123.1 - 192.168.123.254. Do not use the IP Address 192.168.123.7. 
+Connect the 4 pieces of test equipment: Yokogawa WT310E, Agilent E3648, HP34401 x2  vi USB
+
+Start the application with the command **./cal**   
+Verify the 4 pieces of test equipment are detected correctly.
+
+Enough Data must be gathered to create accurate LUTs. To do this, the same calibration routines are run multiple times, and over time throughout the day.    
+(to get ambient temperature change).    
+If you run the cal process automatically, you'll see the each routine is run 3-4 times. At the first menu, select Automatic Calibration.     
+![plot](./md/tests/auto1.png)   
+
+This will automatically run the routines for you. The different routines that are run are:    
+   - Calibrate Load    
+   - Measure REF100 Current    
+   - Calibrate Pi DAQ measurement of Cooler Volts    
+   - Calibrate Pi SAQ measurement of Cooler mA   
+   - Calibrate Diode Voltage    
+   - Measure Thermocouple Temperature   
+
+### First Iteration of Cal Routines in Automatic Calibration    
+This covers each calibration routine, to understand any cabling changes and what the test is doing.    
+#### Thermocouple Measurement   
+Cabline:
+- 3 thermocouples are plugged into the Pi DAQ. (the yellow connectors at the front of the board)   
+To compare measured temp between thermocouples, it helps to have them pressed against an isothermal surface, like a block of metal. I used a block of aluminum, and secured the thermocouple junctions to the aluminum with kapton tape. 10 readings are taken of each thermcouple. This is to show the measurement circuit is working correctly and temperatures are reasonably close in value.
+![plot](./md/tests/thermocouple.png)   
+
+#### REF100 Current Measurement
+Cabling:  
+  - DB9 connector is connected to the DB9 Header at the front of the Calbration Box   
+  - HP_34401_B LO terminal is connected to J25
+  - HP_34401_B HI terminal is connected to J24
+  - HP_34401_A LO terminal is connected to J19
+  - HP_34401_A HI terminal is connected to J18
+THe REF100 IC is the current source to the temp diode in the dewar. The nominal value should be 100uA. This test measures the current source to verify it is within spec. 10 current measurements are taken, average and standard deviation are shown.   
+![plot](./md/tests/ref100.png)   
+
+#### Diode Voltage Measurement and Calibration
+Cabling:  
+  - DB9 connector is connected to the DB9 Header at the front of the Calbration Box   
+  - HP_34401_B LO terminal is connected to J25
+  - HP_34401_B HI terminal is connected to J24
+  - HP_34401_A LO terminal is connected to J19
+  - HP_34401_A HI terminal is connected to J18
+The program pauses and waits for you to make the cable change:   
+![plot](./md/tests/diode1.png)   
+It is super easy to make this change. Connect a black banana lead from the E3648 power supply, Output 1 (-) terminal, to J20 on top of the Calibration Box.   
+Connect a red banana lead from the E3648 power supply, Output 1 (+) terminal, to J17 on top of the Calibration Box. Make sure the DB9 connector from the Calibration Box is plugged into the DB9 header on the Pi DAQ. Then hit enter. The Agilent PS will output different voltages, in the range of diode Voltages we expect to see. The Pi DAQ will measure this Voltage, and simultaneously the HP34401_A will measure the same Voltage. The two values are recorded. The test output on the screen will show the difference in values.   
+![plot](./md/tests/diode_cal.png)    
+Here we are looking at a 63 uV difference. Pretty good.
+
+#### AC Current Measurement    
+Cabling:  
+  - black banana is connected from the black output of the Pi to J2 on the top of the Calibration Box.    
+  - red banana is connected from the red banana output of the Pi to J4 on the top of the Calibration Box.    
+  - Yokogawa current in & current out are connected to Calibration Box J3 and J6.    
+  - CCC is connected to the back of the Calibration Box, at connectors J5 & J7    
+
+The Pi DAQ provides power to the CCC, and the CCC drives a compressor during cooldown.  The Pi measures the AC current to the CCC. The Yokogawa power meter also measures this current. The Yokogawa is continuously queried for its measured values.  The Pi DAQ measured values and the Yokogawa values are compared and recorded. The test continues until the Dewar reaches the cooldown setpoint temperature. At this point the CCC current will drop dramatically, to ~30 mA. The calibration program detects this condition, and stops the test when current dips under 100 mA. 
+![plot](need image)    
+
+
+#### Pi DAQ Output Voltage Calibration    
+Cabling:  
+  - black banana is connected from the black output of the Pi to J25 on the back of the Calibration Box.    
+  - red banana is connected from the red banana output of the Pi to J24 on the back of the Calibration Box.
+  - black banana is connected from the E3648 PS Output 1 (-) to J25 on the back of the Calibration Box.    
+  - red banana is connected from E3648 PS Output 1 (+) to J24 on the back of the Calibration Box. 
+  - HP_34401_B LO terminal is connected to J25 (black)
+  - HP_34401_B HI terminal is connected to J24 (red)
+
+The Pi DAQ measures its output Voltage to the CCC. This test calibrates the Pi measurement. The Agilent E3648 provides controlled output Voltages. The Voltage is input to the Pi for measurement, and also measured by HP34401_B. The two values are compared and recorded.
+![plot](need image)  
+
+#### Pi DAQ Load Current Calibration   
+Cabling:  
+  - DB9 connector is connected to the DB9 Header at the front of the Calbration Box   
+  - HP_34401_B LO terminal is connected to J25 (black)
+  - HP_34401_B HI terminal is connected to J24 (red)
+  - HP_34401_A LO terminal is connected to J19 (black)
+  - HP_34401_A HI terminal is connected to J18 (red)
+
+The Pi DAQ provides a programmable current source to a 200 Ohm load resistor in the Dewar. The current disipates heat in the dewar, allowing for a programmable load to be placed on the IDCA. This test calibrates the Pi DAQ measured output Voltage and Current. The programmable current source is output at the DB9 Header. The Cal Box has 200R load inside with attached heat sink. THe HP34401_A and HP34401_B monitor the Voltage and Curent. The Values are compared to the Pi measured values. Note: at higher current levels you'll see the Pi measures a higher Voltage than the HP meter. This is normal and due to the Voltage drop through the cabling. 
+![plot](need image)  
+
+
+
+
+
+
+When a cable change is needed, the calibration program pauses, and instructions are given on what cables to change. After the cable change is complete, hit enter key to continue with the calibration routine.
+
+
+
+

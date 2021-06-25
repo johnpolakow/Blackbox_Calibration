@@ -13,7 +13,6 @@
   - [DUT Pi Directory Structure](#dut-pi-directory-structure)
   - [LUT Production inputs:](#lut-production-inputs)
   - [LUT Outputs:](#lut-outputs)
-  - [Cal_Parameters.h, Cal_Parameters.cpp](#cal_parametersh-cal_parameterscpp)
   - [Instructions For Use](#instructions-for-use)
     - [First Iteration of Cal Routines in Automatic Calibration](#first-iteration-of-cal-routines-in-automatic-calibration)
       - [Thermocouple Measurement](#thermocouple-measurement)
@@ -22,15 +21,18 @@
       - [AC Current Measurement](#ac-current-measurement)
       - [Pi DAQ Output Voltage Calibration](#pi-daq-output-voltage-calibration)
       - [Pi DAQ Load Current Calibration](#pi-daq-load-current-calibration)
+      - [Process Log Files, Create LUT](#process-log-files-create-lut)
+      - [SSH File Transfer & Server Initialization](#ssh-file-transfer--server-initialization)
+  - [Cal_Parameters.h, Cal_Parameters.cpp](#cal_parametersh-cal_parameterscpp)
 
 This application is used to calibrate the Raspberry Pi based DAQ, which datalogs metrics for coolers. This application runs on Raspberry Pi, which is used to control relays, test equipment, and the Raspberry Pi being calibrated. The Raspberry Pi this application runs on is housed inside a 'Calibration Relay Box', which multiplexes different signals to the meters to be tested. 
 
 The test equipment used is:
-[](./md/test_equipment.png)
+![plot](./md/test_equipment.png)
 
 
 The communication setup:
-[](./md/test_setup.png)
+![plot](./md/test_setup.png)
 A USB Hub can be used to connect all USB devices, then the Pi can be connected to the hub.
 
 ## Program Overview
@@ -60,7 +62,7 @@ Finally, the application connects to the DUT, and writes the LUT files
  - verifies the server process is operating correctly
 
   
-The datalog files will be compiled into lookup tables. The data is sorted, filtered, and averaged to produce accurate LUT points. C code header files are produced which contain the LUT points. After all LUTs have been created, the LUT files are transferred via SSH to the Pi being calibrated. 
+The datalog files aer compiled into lookup tables. The data is sorted, filtered, and averaged to produce accurate LUT points. C code header files are produced which contain the LUT points. After all LUTs have been created, the LUT files are transferred via SSH to the Pi being calibrated. 
 The Pi DAQ firmware is then compiled remotely, with the new LUT files. Finally, the DAQ Server process on the Pi is initiated.
 
 ## Required Libraries
@@ -81,7 +83,7 @@ sudo make check
 sudo make install   
 ```
 
-**libssh** is also required to automatically transfer the LUT files to the Pi DUT. As of right now there is not an up to date **libssh** package available for the Raspberry Pi. To use this library the source files needs to be downloaded and compiled. I ran into some difficulties doing this, see instructions on how to compile 
+**libssh** is also required to automatically transfer the LUT files to the Pi DUT. As of right now there is not an up to date, ready to use,  **libssh** package for the Raspberry Pi. It needs to be compiled from source. I ran into some difficulties doing this, see instructions on how to compile 
 libssh [here](./md/libssh_install.md)   
 
 ## Downloading Code and Compiling
@@ -103,7 +105,7 @@ As seen above there is a makefile. To compile the code just type 'make':
 ![plot](./md/compile/compile03.png)  
 Easy.   
 
-after issuing the make command, modules will be succesively compiled, and then finally linking all obj files. On the Pi, it will take 2-3 minutes to finish compiling. 
+after issuing the **make** command, modules will be succesively compiled, then all object files are linked. On the Pi, it will take 2-3 minutes to finish compiling. 
 
 after the calibration program has built successfully, a creatively named binary, '**cal**', is produced. 
 to execute the code, simply type: 
@@ -111,8 +113,8 @@ to execute the code, simply type:
 Note: do not use sudo to execute. It is not necessary, and application will look in the wrong directory for ssh keys if run as root user. See next section for giving permissions to the pi user for accessing /dev/ttyUSB and /dev/usbtmc devices
 
 ## Giving Pi User Permission to Access **/dev/ttyUSB** & **/dev/usbtmc**
-
-First, the pi user must be in the following groups:
+The user pi user needs access to /dev/ttyUSB and /dev/usbtmc to be able to communicate with the test equipment. This describes how to set up permissions for user pi.   
+pi user must be in the following groups:
   - pi  
   - adm  
   - dialout  
@@ -130,7 +132,7 @@ To see what groups the pi user is in, enter the command ``groups``
 To add the pi user to a group (in this case to the dialout group) enter the command:   
 ``sudo usermod -a -G dialout pi``
 
-verify the pi user belongs to the above groups. Add pi to any groups if necessary.   
+verify the pi user belongs to the above groups. Add pi to any groups not present in the above list.   
 
 Next, some rules must be set that give groups permission to access /dev/ttyUSB. The rule files needed are included with this repo, in the **etc/** folder:   
    - 99-com.rules   
@@ -142,7 +144,7 @@ Move these three files to the /etc/udev/rules.d/ directory on the pi with this c
 
 Those three files should now be in the /etc/udev/rules.d/ directory
 
-Next, create a new group usbtmc:   
+Next, create a new group **usbtmc**:   
 ```sudo groupadd usbtmc```    
 
 Add pi user to the group:   
@@ -154,12 +156,12 @@ list the current owner and group of usbtmc0:
 ![plot](./md/rules.d/la_usbtmc0.png)    
 
 
-It still belongs to the root user and group. To update, we need to reload the rules. Enter the commands:
-```sudo udevadm control --reload-rules```
-sudo udevadm trigger```   
-![plot](./md/rules.d/udevadm.png)  
+It still belongs to the root user and group. To update, we need to reload the rules. Enter the commands:     
+```sudo udevadm control --reload-rules```    
+```sudo udevadm trigger```   
+![plot](./md/rules.d/udevadm.png)   
 
-to give the devices the new permissions, either unplug the device USB, then plug back in, or reboot the Pi.   
+to give the devices the new permissions, either unplug the device USB, then plug it back in, or reboot the Pi.   
 (sudo reboot -h now)
 check the permissions to the usbtmc devices again and see if you now have access:
 ![plot](./md/rules.d/check_perm_usbtmc_again.png)  
@@ -168,10 +170,10 @@ you can see above that /dev/usbtmc0 belongs to the usbtmc group
 Creating A Rules File
 If you don't have the '11-yokogawa-wt310e.rules' file, it can be created. change directories to **/etc/udev/rules.d/**
 
-find out what the device manufacturer and id are, of the USB attached test equipment,  with the lsusb command:
-```sudo lsusb```
-![plot](./md/rules.d/lsusb.png)  
-here we see the device manufacturer and ID for the Yokogawa is 0b21 & 0025. Remember these values 
+find out what the device manufacturer and ID are, of the USB attached test equipment,  with the **lsusb** command:    
+```sudo lsusb```    
+![plot](./md/rules.d/lsusb.png)    
+here we see the device manufacturer and ID for the Yokogawa is 0b21 & 0025. Remember these values   
 
 
 Now create the new rules file. enter the command:
@@ -284,13 +286,14 @@ Important home folders on the (Calibration Box) Pi are: CAL_LOGS, CAL_LUT, and C
 **CAL_LOGS/** contains data files gathered during calibration. They are organized by MAC address of the PI DAQ being calibrated:  
 ![plot](./md/dir/logs_proc.png)  
 you can see in the above image, the log files have already been scraped for data and converted into LUTs (they have been moved to the processed logs directory).  
-If needed, the logs can be manually moved back to the unprocessed log folder. Also note: the REF100 log and Thermocouple log are never processed into LUTs. They are kept for performance verification.
+If needed, the logs can be manually moved back to the unprocessed log folder.   
+Note: the REF100 log and Thermocouple log are never processed into LUTs. 
 
 The **CAL_LUT/** directory:   
-![plot](./md/lut_files.png)    
+![plot](./md/LUT/lut_files.png)    
 
 ## DUT Pi Directory Structure
-The home directory on the Pi DUT:
+The home directory on the Pi DUT:   
 ![plot](./md/dir/daq_home.png)    
 
 The Pi DAQ firmware source files are located in the confusingly named **firmware** directory:   
@@ -319,25 +322,17 @@ These are the LUT files created by the Calibration program:
  - LOAD_V_LUT.h
 
 
-## Cal_Parameters.h, Cal_Parameters.cpp
-
-There are other string definitions in the Cal_Parameters.cpp file, it is probably best to avoid making changes. The locations of various directories are defined.
-DC Voltage Points are also defined for the diode calibration, and for calibration of the PI DAQ output voltage measurement (to CCC).
-
-In Cal_Parameters.h are some parameters that adjust how data is filtered and grouped into lookup tables. Some of these apply to different LUTs that are created. 
-
 ## Instructions For Use
 Compile the Calibration Code as outlined earlier.  
-Connect a Pi DAQ to be calibrated (DUT Pi), via Ethernet cable, to the the Calibration Box. Verify the Pi DAQ has an IP Address in the   
-range of 192.168.123.1 - 192.168.123.254. Do not use the IP Address 192.168.123.7. 
+Connect a Pi DAQ to be calibrated (DUT Pi), via Ethernet cable, to the Pi inside the Calibration Box.    
+Verify the Pi DAQ has an IP Address in the range of:  192.168.123.1 - 192.168.123.254.    
+--Do not use the IP Address 192.168.123.7--
 Connect the 4 pieces of test equipment: Yokogawa WT310E, Agilent E3648, HP34401 x2  vi USB
 
-Start the application with the command **./cal**   
+Start the application with the command:   **./cal**   
 Verify the 4 pieces of test equipment are detected correctly.
 
-Enough Data must be gathered to create accurate LUTs. To do this, the same calibration routines are run multiple times, and over time throughout the day.    
-(to get ambient temperature change).    
-If you run the cal process automatically, you'll see the each routine is run 3-4 times. At the first menu, select Automatic Calibration.     
+At the first menu, select Automatic Calibration.     
 ![plot](./md/tests/auto1.png)   
 
 This will automatically run the routines for you. The different routines that are run are:    
@@ -351,7 +346,7 @@ This will automatically run the routines for you. The different routines that ar
 ### First Iteration of Cal Routines in Automatic Calibration    
 This covers each calibration routine, to understand any cabling changes and what the test is doing.    
 #### Thermocouple Measurement   
-Cabline:
+Cabling:
 - 3 thermocouples are plugged into the Pi DAQ. (the yellow connectors at the front of the board)   
 To compare measured temp between thermocouples, it helps to have them pressed against an isothermal surface, like a block of metal. I used a block of aluminum, and secured the thermocouple junctions to the aluminum with kapton tape. 10 readings are taken of each thermcouple. This is to show the measurement circuit is working correctly and temperatures are reasonably close in value.
 ![plot](./md/tests/thermocouple.png)   
@@ -375,8 +370,11 @@ Cabling:
   - HP_34401_A HI terminal is connected to J18
 The program pauses and waits for you to make the cable change:   
 ![plot](./md/tests/diode1.png)   
-It is super easy to make this change. Connect a black banana lead from the E3648 power supply, Output 1 (-) terminal, to J20 on top of the Calibration Box.   
-Connect a red banana lead from the E3648 power supply, Output 1 (+) terminal, to J17 on top of the Calibration Box. Make sure the DB9 connector from the Calibration Box is plugged into the DB9 header on the Pi DAQ. Then hit enter. The Agilent PS will output different voltages, in the range of diode Voltages we expect to see. The Pi DAQ will measure this Voltage, and simultaneously the HP34401_A will measure the same Voltage. The two values are recorded. The test output on the screen will show the difference in values.   
+It is super easy to make this change.    
+Connect a black banana lead from the E3648 power supply, Output 1 (-) terminal, to J20 on top of the Calibration Box.     
+Connect a red banana lead from the E3648 power supply, Output 1 (+) terminal, to J17 on top of the Calibration Box.     
+Make sure the DB9 connector from the Calibration Box is plugged into the DB9 header on the Pi DAQ.   
+Then hit enter. The Agilent PS will output different voltages, in the range of diode Voltages we expect to see. The Pi DAQ will measure this Voltage, and simultaneously the HP34401_A will measure the same Voltage. The two values are recorded. The test output on the screen will show the difference in values.   
 ![plot](./md/tests/diode_cal.png)    
 Here we are looking at a 63 uV difference. Pretty good.
 
@@ -415,12 +413,54 @@ The Pi DAQ provides a programmable current source to a 200 Ohm load resistor in 
 ![plot](need image)  
 
 
+#### Process Log Files, Create LUT
+After calibration runs, the log files are stored in the **CAL_LOGS/** directory. The files are organized by the MAC address of the Pi DUT. For this board the MAC was   
+B8.27.EB.2B.FB.70, hence the directory name:   
+![plot](./md/dir/log_dir.png)   
+
+The files present are:    
+![plot](./md/dir/log_files.png)   
+
+The LUT menu is shown below:    
+![plot](./md/LUT/LUT_Menu.png)     
+
+If you want to see the LUT filtering process you can select each file individually, or to process all files select option 6. Selecting option processes all log files into lookup table files. After each log file is processed, the file is moved to the PROCESSED_LOGS/ directory. See below after the logs have been processed, the files have been moved:   
+![plot](./md/dir/logs_proc.png)    
+
+The lookup tables are created at the CAL_LUT/ location, and organized by MAC address:   
+![plot](./md/dir/lut_dir.png)  
+
+The lookup present are:   
+![plot](./md/LUT/lut_files.png)  
 
 
+#### SSH File Transfer & Server Initialization     
+SSH starts, and searches the local network for Pis. It connects to the first Pi available on the Ethernet network, via SSH. Next it checks if the remote host already has SSH configured, and has an authorized_keys file:    
+![plot](./md/SSH/SSH_start.png)  
+
+If it has an authorized keys file, the file is read. Then the Cal application reads the local SSH keys, to see if the remote host has our keys already.   
+![plot](./md/SSH/read_keys.png)  
+
+If the remote host has our keys already, great. If not, the local SSH keys are sent to the remote host and written to the authorized_keys file, enabling future logins without password entry.    
+![plot](./md/SSH/SSH_03.png)  
+Remote folders are created if they don't exist already.    
+
+Next all the LUT files are sent:    
+![plot](./md/SSH/SSH_04.png)  
+
+the target destination of LUT files is:  **/home/pi/firmware/CAL_DATA/**     
+
+The Pi DAQ firmware is then remotely compiled by the Calibration application. it is easy to do. just execute the command make in the /home/pi/firmware/ directory:   
+![plot](./md/SSH/SSH_07.png)  
+
+Last, the Calibration application remotely starts the Pi DAQ server and verifies the process is running properly:   
+![plot](./md/SSH/SSH_08.png)  
+![plot](./md/SSH/SSH_09.png)  
 
 
-When a cable change is needed, the calibration program pauses, and instructions are given on what cables to change. After the cable change is complete, hit enter key to continue with the calibration routine.
+## Cal_Parameters.h, Cal_Parameters.cpp
 
+There are other string definitions in the Cal_Parameters.cpp file, it is probably best to avoid making changes. The locations of various directories are defined.
+DC Voltage Points are also defined for the diode calibration, and for calibration of the PI DAQ output voltage measurement (to CCC).
 
-
-
+In Cal_Parameters.h are some parameters that adjust how data is filtered and grouped into lookup tables. Some of these apply to different LUTs that are created. 

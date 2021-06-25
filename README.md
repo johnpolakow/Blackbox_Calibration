@@ -10,7 +10,7 @@
   - [Calibration Pi Directory Structure](#calibration-pi-directory-structure)
   - [DUT Pi Directory Structure](#dut-pi-directory-structure)
   - [LUT Production inputs:](#lut-production-inputs)
-  - [LUT Production Outputs:](#lut-production-outputs)
+  - [LUT Outputs:](#lut-outputs)
   - [Cal_Parameters.h, Cal_Parameters.cpp](#cal_parametersh-cal_parameterscpp)
 
 This application is used to calibrate the Raspberry Pi based DAQ, which datalogs metrics for coolers. This application runs on Raspberry Pi, which is used to control relays, test equipment, and the Raspberry Pi being calibrated. The Raspberry Pi this application runs on is housed inside a 'Calibration Relay Box', which multiplexes different signals to the meters to be tested. 
@@ -69,11 +69,11 @@ The following files should now be present in the directory:
 
 As seen above there is a makefile. To compile the code just type 'make':  
 ![plot](./md/compile/compile02.png)  
-![plot](./md/compile/compile03.png)
+![plot](./md/compile/compile03.png)  
 
 
 
-modules will be succesively compiled. On the Pi, it will take 2-3 minutes to finish compiling. Required libraries to compile this code are:
+after the make command, modules will be succesively compiled, before linking all obj files. On the Pi, it will take 2-3 minutes to finish compiling. Required libraries to compile this code are:
    - [BCM2835](https://www.airspayce.com/mikem/bcm2835/) (Raspberry Pi gpio library)
    - [libssh](https://www.libssh.org/)  ...library for ssh access. See [libssh install notes](./md/libssh_install.md) to compile on Pi from source
 
@@ -149,28 +149,28 @@ After processing into a LUT, the log file is moved to ```/home/pi/CAL_LOGS/PROCE
 
 
 ## SSH File Upload and BCM2835 Installation
-
+--TODO--
 
 
 
 
 ## Calibration Pi Directory Structure   
-three important home folders on the Pi are: CAL_LOGS, CAL_LUT, and Cal_Station:   
+Important home folders on the (Calibration Box) Pi are: CAL_LOGS, CAL_LUT, and Cal_Station:   
 ![plot](./md/home_folders.png)   
 
-Cal_Station contains the calibration src files and binary. The src/ file list is extensive:  
+**Cal_Station/** contains the calibration program source files and binary. The **src/** file list is extensive:  
 ![plot](./md/src_01.png)    
 ![plot](./md/src_02.png)   
 ![plot](./md/src_03.png)   
 89 source files!
 
-The CAL_LOGS/ directory contains data files gathered during calibration. They are organized by MAC address of the PI DAQ being calibrated:  
+**CAL_LOGS/** contains data files gathered during calibration. They are organized by MAC address of the PI DAQ being calibrated:  
 ![plot](./md/logs_proc.png)  
-you can see in the above image, the log files have already been scraped for data and converted into LUTs (they have been moved to the processed logs directory)
+you can see in the above image, the log files have already been scraped for data and converted into LUTs (they have been moved to the processed logs directory).  
 If needed, the logs can be manually moved back to the unprocessed log folder. Also note: the REF100 log and Thermocouple log are never processed into LUTs. They are kept for performance verification.
 
-The CAL_LUT/ directory:
-![plot](./md/lut_files.png) 
+The **CAL_LUT/** directory:   
+![plot](./md/lut_files.png)    
 
 ## DUT Pi Directory Structure
 
@@ -184,7 +184,7 @@ The CAL_LUT/ directory:
 
 some example log files are [here](./md/example_logs/)
 
-## LUT Production Outputs:
+## LUT Outputs:
  - COOLER_mA_LUT.h
  - COOLER_V_LUT.h
  - DIODE_V_LUT.h

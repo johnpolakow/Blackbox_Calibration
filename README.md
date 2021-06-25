@@ -8,7 +8,6 @@
   - [Pi DUT Connection:](#pi-dut-connection)
   - [Program Start:](#program-start)
   - [Menu Structure](#menu-structure)
-  - [SSH File Upload and BCM2835 Installation](#ssh-file-upload-and-bcm2835-installation)
   - [Calibration Pi Directory Structure](#calibration-pi-directory-structure)
   - [DUT Pi Directory Structure](#dut-pi-directory-structure)
   - [LUT Production inputs:](#lut-production-inputs)
@@ -26,10 +25,6 @@
   - [Cal_Parameters.h, Cal_Parameters.cpp](#cal_parametersh-cal_parameterscpp)
 
 This application is used to calibrate the Raspberry Pi based DAQ, which datalogs metrics for coolers. This application runs on Raspberry Pi, which is used to control relays, test equipment, and the Raspberry Pi being calibrated. The Raspberry Pi this application runs on is housed inside a 'Calibration Relay Box', which multiplexes different signals to the meters to be tested. 
-
-The test equipment used is:
-![plot](./md/test_equipment.png)
-
 
 The communication setup:
 ![plot](./md/test_setup.png)
@@ -203,7 +198,7 @@ you can see owner changed to usbtmc
 ## Pi DUT Connection:
 the Pi unit to be calibrated needs to connect to the Pi residing in the calibration box, via Ethernet cable. The subnet for this network is 192.168.123.XXX
 The default IP for the calibration box Pi is 192.168.123.7. Below is a picture of how the test equipment should be connected. As noted before, the IP Address of the Pi controlling the *Calibration Box* is 192.168.123.7. The Pi DUT therefore needs to have an IP address in the form of 192.168.123.XXX
-![plot](./md/compile/test_setup.png)  
+![plot](./md/test_setup.png)  
 
 ## Program Start:
 First the application searches the local Ethernet connection for any Raspberry Pis. If found it will show the IP and MAC of the Pi it is connecting to. If the PI DAQ server process is running, a message will be displayed showing "PI HOST IS UP". Also shown will be the directory of where log files are stored (on the Calibration Box Pi). Each Pi has its data saved in a folder identified by its MAC address:
@@ -225,7 +220,7 @@ If the application is unable to find all 4 pieces of test equipment, the program
 Something to keep in mind:
 the application identifies the HP meters and Agilent Power Supply by their individual SCPI ID. This is the value returned by executing the SCPI query: **\*IDN?**
 over RS232 or gpib.   
-Why this is important: if you use a physically different HP34401 meter or Agilent E3648 power supply, they will not be identified correctly. The ID# is shown in the image above. If you need to change the ID this application is looking for, adjust the following strings in Cal_Parameters.cpp:
+Why this is important: if you use a physically different HP34401 meter or Agilent E3648 power supply, they will not be identified correctly. The ID# is shown in the image above. If you need to change the ID this application is looking for, adjust the following strings in **Cal_Parameters.cpp:**
 ```
 const char* HP_A_ID = "0,11-5-2";  
 const char* HP_B_ID = "0,2-1-1";  
@@ -264,13 +259,6 @@ The LUT is produced into a C .h header file, and stored locally in ```/home/pi/C
 
 After processing into a LUT, the log file is moved to ```/home/pi/CAL_LOGS/PROCESSED_LOGS/[DUT_MAC_ADDR]/```    
 ![plot](./md/dir/processed_log.png)   
-
-
-
-## SSH File Upload and BCM2835 Installation
---TODO--
-
-
 
 
 ## Calibration Pi Directory Structure   
@@ -326,13 +314,13 @@ These are the LUT files created by the Calibration program:
 Compile the Calibration Code as outlined earlier.  
 Connect a Pi DAQ to be calibrated (DUT Pi), via Ethernet cable, to the Pi inside the Calibration Box.    
 Verify the Pi DAQ has an IP Address in the range of:  192.168.123.1 - 192.168.123.254.    
---Do not use the IP Address 192.168.123.7--
+--Do not use the IP Address 192.168.123.7--    
 Connect the 4 pieces of test equipment: Yokogawa WT310E, Agilent E3648, HP34401 x2  vi USB
 
 Start the application with the command:   **./cal**   
 Verify the 4 pieces of test equipment are detected correctly.
 
-At the first menu, select Automatic Calibration.     
+At the first menu, select 1. Automatic Calibration. Just hit the number 1 key and it will start    
 ![plot](./md/tests/auto1.png)   
 
 This will automatically run the routines for you. The different routines that are run are:    
@@ -386,8 +374,7 @@ Cabling:
   - CCC is connected to the back of the Calibration Box, at connectors J5 & J7    
 
 The Pi DAQ provides power to the CCC, and the CCC drives a compressor during cooldown.  The Pi measures the AC current to the CCC. The Yokogawa power meter also measures this current. The Yokogawa is continuously queried for its measured values.  The Pi DAQ measured values and the Yokogawa values are compared and recorded. The test continues until the Dewar reaches the cooldown setpoint temperature. At this point the CCC current will drop dramatically, to ~30 mA. The calibration program detects this condition, and stops the test when current dips under 100 mA. 
-![plot](need image)    
-
+![plot](./md/tests/cooler_mA_01.png)      
 
 #### Pi DAQ Output Voltage Calibration    
 Cabling:  
@@ -399,7 +386,7 @@ Cabling:
   - HP_34401_B HI terminal is connected to J24 (red)
 
 The Pi DAQ measures its output Voltage to the CCC. This test calibrates the Pi measurement. The Agilent E3648 provides controlled output Voltages. The Voltage is input to the Pi for measurement, and also measured by HP34401_B. The two values are compared and recorded.
-![plot](need image)  
+![plot](./md/tests/cooler_VDC_03.png)      
 
 #### Pi DAQ Load Current Calibration   
 Cabling:  
@@ -410,8 +397,11 @@ Cabling:
   - HP_34401_A HI terminal is connected to J18 (red)
 
 The Pi DAQ provides a programmable current source to a 200 Ohm load resistor in the Dewar. The current disipates heat in the dewar, allowing for a programmable load to be placed on the IDCA. This test calibrates the Pi DAQ measured output Voltage and Current. The programmable current source is output at the DB9 Header. The Cal Box has 200R load inside with attached heat sink. THe HP34401_A and HP34401_B monitor the Voltage and Curent. The Values are compared to the Pi measured values. Note: at higher current levels you'll see the Pi measures a higher Voltage than the HP meter. This is normal and due to the Voltage drop through the cabling. 
-![plot](need image)  
+![plot](./md/tests/dac_cal.png)   
+here at 33mA, there is a 40 mV drop between what the Pi measures, and what the HP34401 measures. Some of this is due to error, some of it is due to Voltage drop in the cabling.    
 
+Here at 80 mA, there is now a 100 mV drop in the cabling:    
+![plot](./md/tests/dac03.png)   
 
 #### Process Log Files, Create LUT
 After calibration runs, the log files are stored in the **CAL_LOGS/** directory. The files are organized by the MAC address of the Pi DUT. For this board the MAC was   
@@ -424,38 +414,38 @@ The files present are:
 The LUT menu is shown below:    
 ![plot](./md/LUT/LUT_Menu.png)     
 
-If you want to see the LUT filtering process you can select each file individually, or to process all files select option 6. Selecting option processes all log files into lookup table files. After each log file is processed, the file is moved to the PROCESSED_LOGS/ directory. See below after the logs have been processed, the files have been moved:   
+If you want to see the LUT filtering process you can select each file individually, or, to process all files, select option 6. Selecting option 6 processes all log files into lookup table files. After each log file is processed, the file is moved to the **PROCESSED_LOGS/** directory. See below after the logs have been processed, the files have been moved:   
 ![plot](./md/dir/logs_proc.png)    
 
 The lookup tables are created at the CAL_LUT/ location, and organized by MAC address:   
 ![plot](./md/dir/lut_dir.png)  
 
-The lookup present are:   
+The lookup tables present are:   
 ![plot](./md/LUT/lut_files.png)  
 
 
 #### SSH File Transfer & Server Initialization     
-SSH starts, and searches the local network for Pis. It connects to the first Pi available on the Ethernet network, via SSH. Next it checks if the remote host already has SSH configured, and has an authorized_keys file:    
+SSH starts, and searches the local network for Pis. It connects to the first Pi available on the Ethernet network, via SSH. Next it checks if the remote host already has SSH configured, and has an **authorized_keys** file:    
 ![plot](./md/SSH/SSH_start.png)  
 
-If it has an authorized keys file, the file is read. Then the Cal application reads the local SSH keys, to see if the remote host has our keys already.   
+If it has an authorized_keys file, the file is read. Then the Cal application reads the **local** SSH keys (on Calibration Pi), to see if the remote host has our keys already.   
 ![plot](./md/SSH/read_keys.png)  
 
-If the remote host has our keys already, great. If not, the local SSH keys are sent to the remote host and written to the authorized_keys file, enabling future logins without password entry.    
-![plot](./md/SSH/SSH_03.png)  
+If the remote host has our keys already, great. If not, the local SSH keys are sent to the remote host and written to the **authorized_keys** file, enabling future logins without password entry.    
+![plot](./md/SSH/SSH03.png)  
 Remote folders are created if they don't exist already.    
 
-Next all the LUT files are sent:    
-![plot](./md/SSH/SSH_04.png)  
+Next all LUT files are sent:    
+![plot](./md/SSH/SSH04.png)  
 
 the target destination of LUT files is:  **/home/pi/firmware/CAL_DATA/**     
 
 The Pi DAQ firmware is then remotely compiled by the Calibration application. it is easy to do. just execute the command make in the /home/pi/firmware/ directory:   
-![plot](./md/SSH/SSH_07.png)  
+![plot](./md/SSH/SSH07.png)  
 
 Last, the Calibration application remotely starts the Pi DAQ server and verifies the process is running properly:   
-![plot](./md/SSH/SSH_08.png)  
-![plot](./md/SSH/SSH_09.png)  
+![plot](./md/SSH/SSH08.png)  
+![plot](./md/SSH/SSH09.png)  
 
 
 ## Cal_Parameters.h, Cal_Parameters.cpp

@@ -62,21 +62,26 @@ At this point the binary has been compiled, but not installed into the system li
 ```sudo make install```   
 
 after sudo make install, libssh was installed in these locations:    
-    header files:   /usr/include/libssh    
-    object files:   /usr/local/lib   
-                    /usr/lib   
+header files:   
+ - /usr/include/libssh    
 
-At this point I would still get linker errors or an error while the program was running. To fix, I had to copy the .so object files from **/usr/local/lib**     
-to **/usr/lib/arm-linux-gnueabihf/**  These files were copied:    
-    libssh.so [symbolic link]     
-    libssh.so.4 [symbolic link]     
-    libssh.so.4.8.6  [binary]    
+object files: 
+ - /usr/local/lib   
+ - /usr/lib   
 
-Finally, to get the program to compile correctly without “undefined reference” errors during linking, I had to discover what compile flags were required for compiling the Calibration source code. The compile flags are already in the makefile, but this information is for reference. The compile flags can be found with:
-pkg-config --cflags --libs libssh    
+At this point I would still get linker errors or an error while the program was running. To fix, I had to copy the .so object files from    
+**/usr/local/lib** to **/usr/lib/arm-linux-gnueabihf/**   
+These files were copied:    
+   - libssh.so [symbolic link]     
+   - libssh.so.4 [symbolic link]     
+   - libssh.so.4.8.6  [binary]    
+
+Finally, to get the program to compile correctly without “undefined reference” errors during linking, I had to discover what compile flags were required for compiling the Calibration source code. The compile flags are already prseent in the included makefile, but this information is for reference. 
+The compile flags can be found with:   
+```pkg-config --cflags --libs libssh```    
 
 The output of the above command was:   
--I /usr/local/include -L /usr/local/lib -l ssh   
+```-I /usr/local/include -L /usr/local/lib -l ssh   ```
 
 Lastly, the libssh tutorial specifies using the    
 ```#define LIBSSH_STATIC 1```   
@@ -84,7 +89,7 @@ directive in the source code **before** the #include for libssh: (#include <libs
 I found this wasn't necessaary, and the executable would run with this directive present or not.
 
 
-Next, before running, we must generate local ssh keys (on the Calibration Pi) to send to the server (DUT Pi). 
+Before running the Calibration executable, it is necessary to generate local ssh keys (on the Calibration Pi) to send to the server (DUT Pi). 
 Create the key pair on the client computer, in the .ssh directory:   
 ```cd ~/.ssh ```
 ```ssh-keygen -t rsa -C "FL100"    ```

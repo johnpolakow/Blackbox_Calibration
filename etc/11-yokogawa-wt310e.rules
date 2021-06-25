@@ -1,0 +1,6 @@
+
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="0b21", ATTRS{idProduct}=="0025", GROUP="usbtmc", MODE="0666"
+
+
+KERNEL=="usbtmc[0-9]", GROUP="usbtmc", MODE="0666"
+KERNEL=="usbtmc*", GROUP="usbtmc", MODE="0666"

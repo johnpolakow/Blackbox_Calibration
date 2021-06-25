@@ -2,7 +2,9 @@
 
 - [Blackbox_Calibration](#blackbox_calibration)
   - [Program Overview](#program-overview)
+  - [Required Libraries](#required-libraries)
   - [Downloading Code and Compiling](#downloading-code-and-compiling)
+  - [Giving Pi User Permission to Access Devices Connected to **/dev/ttyUSB** & **/dev/usbtmc**](#giving-pi-user-permission-to-access-devices-connected-to-devttyusb--devusbtmc)
   - [Pi DUT Connection:](#pi-dut-connection)
   - [Program Start:](#program-start)
   - [Menu Structure](#menu-structure)
@@ -53,13 +55,34 @@ Finally, the application connects to the DUT, and writes the LUT files
 The datalog files will be compiled into lookup tables. The data is sorted, filtered, and averaged to produce accurate LUT points. C code header files are produced which contain the LUT points. After all LUTs have been created, the LUT files are transferred via SSH to the Pi being calibrated. 
 The Pi DAQ firmware is then compiled remotely, with the new LUT files. Finally, the DAQ Server process on the Pi is initiated.
 
+## Required Libraries
+Required libraries to compile this code are:
+   - [BCM2835](https://www.airspayce.com/mikem/bcm2835/) (Raspberry Pi gpio library)
+   - [libssh](https://www.libssh.org/)  ...library for ssh access. See [libssh install notes](./md/libssh_install.md) to compile on Pi from source
+
+BCM2835 may be downloaded from the above link. If you are on the Pi, here are the commands to download and install BCM2835 library:
+```
+sudo apt-get install -y html-xml-utils   
+wget -P /home/pi/Downloads/ http://www.airspayce.com/mikem/bcm2835/bcm2835-1.62.tar.gz;   
+cd /home/pi/Downloads    
+tar zxvf bcm2835*.tar.gz   
+cd /home/pi/Downloads/bcm2835*   
+/home/pi/Downloads/bcm2835-1.62/configure   
+make   
+sudo make check   
+sudo make install   
+```
+
+libssh is also required to automatically transfer the LUT files to the Pi DUT. As of right now there isnt an up to date libssh package available for the Raspberry Pi. To use this library the source files needs to be downloaded and then compiled. I ran into some obastacles doing this, see instructions on how compile 
+libssh [here](./md/libssh_install.md)   
+
 ## Downloading Code and Compiling
-to use this code, first make a dir for the repo:
+to build the Calibration executable, first make a dir to store the source code:
 ```
 mkdir /home/pi/Cal_Station  
 cd /home/pi/Cal_Station  
 ```
-then clone the repo with:  
+download the source files with:  
 
 ```git clone https://github.com/johnpolakow/Blackbox_Calibration.git```    
 
@@ -70,21 +93,103 @@ The following files should now be present in the directory:
 As seen above there is a makefile. To compile the code just type 'make':  
 ![plot](./md/compile/compile02.png)  
 ![plot](./md/compile/compile03.png)  
+Easy.   
 
-
-
-after the make command, modules will be succesively compiled, before linking all obj files. On the Pi, it will take 2-3 minutes to finish compiling. Required libraries to compile this code are:
-   - [BCM2835](https://www.airspayce.com/mikem/bcm2835/) (Raspberry Pi gpio library)
-   - [libssh](https://www.libssh.org/)  ...library for ssh access. See [libssh install notes](./md/libssh_install.md) to compile on Pi from source
+after issuing the make command, modules will be succesively compiled, and then finally linking all obj files. On the Pi, it will take 2-3 minutes to finish compiling. 
 
 after the calibration program has built successfully, a creatively named binary, '**cal**', is produced. 
 to execute the code, simply type: 
 ***```./cal  ```***
-Note: do not use sudo to execute. It is not necessary, and application will look in the wrong directory for ssh keys if run as root user.
+Note: do not use sudo to execute. It is not necessary, and application will look in the wrong directory for ssh keys if run as root user. See next section for giving permissions to the pi user for accessing /dev/ttyUSB and /dev/usbtmc devices
+
+## Giving Pi User Permission to Access Devices Connected to **/dev/ttyUSB** & **/dev/usbtmc**
+
+First, the pi user must be in the following groups:
+  - pi  
+  - adm  
+  - dialout  
+  - plugdev  
+  - gpio  
+  - spi  
+  - input  
+  - netdev  
+  - i2c  
+  - sudo
+
+To see what groups the pi user is in, enter the command ``groups``
+![plot](./md/rules.d/pi_groups.png)  
+
+To add the pi user to a group (in this case to the dialout group) enter the command:   
+``sudo usermod -a -G dialout pi``
+
+verify the pi user belongs to the above groups. Next, some rules need to be set that give groups permission to access /dev/ttyUSB. The rule files needed are included with this repo, in the **etc/** folder:   
+   - 99-com.rules   
+   - 70-ttyUSB.rules   
+   - 11-yokogawa-wt310e.rules   
+
+Move them to the correct folder on the pi with this command:   
+```sudo mv *.rules /etc/udev/rules.d/```
+
+those three files should now be in the /etc/udev/rules.d/ directory
+
+next, create a new group usbtmc:   
+```sudo groupadd usbtmc```    
+
+Add pi user to the group:   
+```sudo gpasswd -a pi usbtmc```    
+![plot](./md/rules.d/group_add.png)  
+
+list the current owner and group of usbtmc0:    
+```la /dev/usbtmc0```
+![plot](./md/rules.d/la_usbtmc0.png)  
+
+It still belongs to the root user and group. To update, we need to reload the rules. Enter the commands:
+```   
+sudo udevadm control --reload-rules   
+sudo udevadm trigger  
+```   
+![plot](./md/rules.d/udevadm.png)  
+
+to give the devices the new permissions, either unplug the device USB, then plug back in, or reboot the Pi. (sudo reboot -h now)
+
+check the permissions to the usbtmc devices again and see if you now have access:
+![plot](./md/rules.d/check_perm_usbtmc_again.png)  
+
+If you don't have the '11-yokogawa-wt310e.rules' file, it can be created. change directories to **/etc/udev/rules.d/**
+
+find out what the device manufacturer and id are with the lsusb command:
+```sudo lsusb```
+![plot](./md/rules.d/vi.png)  
+here we see the device manufacturer and ID for the Yokogawa is 0b21 & 0025. Remember these values 
+
+Now create the new rules file. enter the command:
+```sudo vi 11-yokogawa-wt310e.rules```
+![plot](./md/rules.d/vi.png)  
+
+If you're not familiar with vi, hit the **i** key to insert text.    
+Enter the following lines into the file. Make sure the quantity of equals signs match exactly   
+``` 
+SUBSYTEM=="usb", ACTION=="add", ATTRS{idVendor}=="0b21", ATTRS{idProduct}=="0025", GROUP="usbtmc", MODE="0666"
+
+KERNEL=="usbtmc[0-9], GROUP="usbtmc", MODE="0666"
+KERNEL=="usbtmc*, GROUP="usbtmc", MODE="0666"
+```
+![plot](./md/rules.d/attrs.png)  
+
+if you make a mistake entering the text, hit the escape key to exit insert mode, then move the cursor with arrow keys to text you want to delete, then hit the **x** key to delete characters. When all text has been entered correctly hit the escape key, then to save and quit enter **:wq**
+
+now either unplug the device and plug back in, or reboot to reset the permissions
+
+then can list the device permissions again with:
+```la /dev/usbtmc0```
+
+you can see owner changed to usbtmc
+![plot](./md/rules.d/check_perm_usbtmc_again.png)  
 
 ## Pi DUT Connection:
 the Pi unit to be calibrated needs to connect to the Pi residing in the calibration box, via Ethernet cable. The subnet for this network is 192.168.123.XXX
-The default IP for the calibration box Pi is 192.168.123.7
+The default IP for the calibration box Pi is 192.168.123.7. Below is a picture of how the test equipment should be connected. As noted before, the IP Address of the Pi controlling the *Calibration Box* is 192.168.123.7. The Pi DUT therefore needs to have an IP address in the form of 192.168.123.XXX
+![plot](./md/compile/test_setup.png)  
 
 ## Program Start:
 First the application searches the local Ethernet connection for any Raspberry Pis. If found it will show the IP and MAC of the Pi it is connecting to. If the PI DAQ server process is running, a message will be displayed showing "PI HOST IS UP". Also shown will be the directory of where log files are stored (on the Calibration Box Pi). Each Pi has its data saved in a folder identified by its MAC address:
@@ -173,9 +278,18 @@ The **CAL_LUT/** directory:
 ![plot](./md/lut_files.png)    
 
 ## DUT Pi Directory Structure
+The home directory on the Pi DUT:
+![plot](./md/dir/daq_home.png)    
+
+The Pi DAQ firmware source files are located in the confusingly named **firmware** directory:   
+![plot](./md/dir/daq_firmware.png)   
+
+The source files in this dir are:   
+![plot](./md/dir/daq_firmware02.png)   
 
 
-## LUT Production inputs:
+## LUT Production inputs:    
+These are the files required to create LUT files
  - COOLER_mA.log
  - COOLER_V.log
  - DIODE_V.log
@@ -184,7 +298,8 @@ The **CAL_LUT/** directory:
 
 some example log files are [here](./md/example_logs/)
 
-## LUT Outputs:
+## LUT Outputs:   
+These are the LUT files created by the Calibration program:
  - COOLER_mA_LUT.h
  - COOLER_V_LUT.h
  - DIODE_V_LUT.h

@@ -1,6 +1,7 @@
 # Blackbox_Calibration
 
 - [Blackbox_Calibration](#blackbox_calibration)
+  - [Test Equipment Setup](#test-equipment-setup)
   - [Program Overview](#program-overview)
   - [Required Libraries](#required-libraries)
   - [Downloading Code and Compiling](#downloading-code-and-compiling)
@@ -29,6 +30,11 @@ This application is used to calibrate the Raspberry Pi based DAQ, which datalogs
 The communication setup:
 ![plot](./md/test_setup.png)
 A USB Hub can be used to connect all USB devices, then the Pi can be connected to the hub.
+
+
+## Test Equipment Setup    
+See [here](./md/test_equipment.md) for required equipment and how devices are connected     
+
 
 ## Program Overview
 

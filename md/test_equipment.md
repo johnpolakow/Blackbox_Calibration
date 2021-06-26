@@ -25,6 +25,9 @@ not shown in this diagram are:
   - USB->RS232 connections   
   - CCC + IDCA   
 
+The pinout for the Pi DB9 Header is shown below:
+![plot](./equipment/pinout.png)    
+
 Here is the stack of meters used in the test setup. From top to bottom: Yokogawa WT310E, HP34401, HP34401, E3648:    
 ![plot](./equipment/meters.JPG)    
 
@@ -41,8 +44,5 @@ Labeled connections on the top of the Calibration Box:
 Thermocouples attached to isothermal surface:    
 ![plot](./equipment/isothermal.JPG)    
 
-Ethernet cable plugged in to Calibration Box:    
-![plot](./equipment/cal_eth.JPG)  
 
-The pinout for the Pi DB9 Header is shown below:
-![plot](./equipment/pinout.png)    
+

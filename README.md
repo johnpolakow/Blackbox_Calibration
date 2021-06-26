@@ -27,11 +27,6 @@
 
 This application is used to calibrate the Raspberry Pi based DAQ, which datalogs metrics for coolers. This application runs on Raspberry Pi, which is used to control relays, test equipment, and the Raspberry Pi being calibrated. The Raspberry Pi this application runs on is housed inside a 'Calibration Relay Box', which multiplexes different signals to the meters to be tested. 
 
-The communication setup:
-![plot](./md/test_setup.png)
-A USB Hub can be used to connect all USB devices, then the Pi can be connected to the hub.
-
-
 ## Test Equipment Setup    
 See [here](./md/test_equipment.md) for required equipment and how devices are connected     
 

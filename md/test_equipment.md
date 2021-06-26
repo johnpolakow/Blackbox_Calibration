@@ -36,6 +36,7 @@ Labeled connections on the back of the Calibration Box:
 
 Labeled connections on the top of the Calibration Box:    
 ![plot](./equipment/relay_box_top.JPG)    
+![plot](./equipment/top2.JPG)    
 
 Thermocouples attached to isothermal surface:    
 ![plot](./equipment/isothermal.JPG)    

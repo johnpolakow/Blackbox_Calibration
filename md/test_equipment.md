@@ -41,7 +41,7 @@ Labeled connections on the top of the Calibration Box:
 Thermocouples attached to isothermal surface:    
 ![plot](./equipment/isothermal.JPG)    
 
-Ethernet cable plugged in to Calibration Box:
+Ethernet cable plugged in to Calibration Box:    
 ![plot](./equipment/cal_eth.JPG)  
 
 The pinout for the Pi DB9 Header is shown below:

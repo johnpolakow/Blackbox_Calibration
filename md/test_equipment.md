@@ -44,4 +44,4 @@ Ethernet cable plugged in to Calibration Box:
 ![plot](./equipment/cal_eth.JPG)  
 
 The pinout for the Pi DB9 Header is shown below:
-![plot](./equipment/pinout.JPG)    
+![plot](./equipment/pinout.png)    

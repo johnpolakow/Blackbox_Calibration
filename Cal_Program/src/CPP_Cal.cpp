@@ -61,7 +61,7 @@ void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP3
 
 void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP34401B, PowerSupply* E3648A, Write_Log* FileWrite)
 {
-    // Get the following quantites of Cal Runs:
+    // following quantites of Cal Runs:
     // Thermocouples    4
     // REF100           3
     // Diode Volts      2

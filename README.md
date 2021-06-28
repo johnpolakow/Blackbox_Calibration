@@ -1,5 +1,11 @@
 # Blackbox_Calibration
 
+This repo is for the setup and use of the Calibration Relay Box used to Calibrate thh Pi Based DAQ. The calibration box:
+![plot](./md/dir/equipment/pi-chassis.jpg)   
+
+used for calibrating the Pi based DAQ board:    
+![plot](./md/dir/equipment/IMG_5263.jpg)   
+
 - [Blackbox_Calibration](#blackbox_calibration)
   - [Test Equipment Setup](#test-equipment-setup)
   - [Program Overview](#program-overview)
@@ -11,7 +17,7 @@
   - [Menu Structure](#menu-structure)
   - [Calibration Pi Directory Structure](#calibration-pi-directory-structure)
   - [DUT Pi Directory Structure](#dut-pi-directory-structure)
-  - [LUT Production inputs:](#lut-production-inputs)
+  - [LUT Creation inputs:](#lut-creation-inputs)
   - [LUT Outputs:](#lut-outputs)
   - [Instructions For Use](#instructions-for-use)
     - [First Iteration of Cal Routines in Automatic Calibration](#first-iteration-of-cal-routines-in-automatic-calibration)
@@ -28,7 +34,7 @@
 This application is used to calibrate the Raspberry Pi based DAQ, which datalogs metrics for coolers. This application runs on Raspberry Pi, which is used to control relays, test equipment, and the Raspberry Pi being calibrated. The Raspberry Pi this application runs on is housed inside a 'Calibration Relay Box', which multiplexes different signals to the meters to be tested. 
 
 ## Test Equipment Setup    
-See [here](./md/test_equipment.md) for required equipment and how devices are connected     
+See [here](./md/test_equipment.md) for required equipment and how to connect devices     
 
 
 ## Program Overview
@@ -80,7 +86,8 @@ sudo make install
 ```
 
 **libssh** is also required to automatically transfer the LUT files to the Pi DUT. As of right now there is not an up to date, ready to use,  **libssh** package for the Raspberry Pi. It needs to be compiled from source. I ran into some difficulties doing this, see instructions on how to compile 
-libssh [here](./md/libssh_install.md)   
+libssh [here](./md/libssh_install.md)    
+Also, SSH capability must be enabled on the Calibration Pi. 
 
 ## Downloading Code and Compiling
 to build the Calibration executable, first make a dir to store the source code:
@@ -193,12 +200,12 @@ now either unplug the device and plug back in, or reboot to reset the permission
 then can list the device permissions again with:
 ```la /dev/usbtmc0```
 
-you can see owner changed to usbtmc
+you can see the group changed to usbtmc
 ![plot](./md/rules.d/check_perm_usbtmc_again.png)  
 
 ## Pi DUT Connection:
 the Pi unit to be calibrated needs to connect to the Pi residing in the calibration box, via Ethernet cable. The subnet for this network is 192.168.123.XXX
-The default IP for the calibration box Pi is 192.168.123.7. Below is a picture of how the test equipment should be connected. As noted before, the IP Address of the Pi controlling the *Calibration Box* is 192.168.123.7. The Pi DUT therefore needs to have an IP address in the form of 192.168.123.XXX
+The default IP for the **calibration box Pi** is 192.168.123.7. Below is a picture of how the test equipment should be connected. As noted before, the IP Address of the Pi controlling the *Calibration Box* is 192.168.123.7. The Pi DUT therefore needs to have an IP address in the form of 192.168.123.XXX
 ![plot](./md/test_setup.png)  
 
 ## Program Start:
@@ -292,7 +299,7 @@ The source files in this dir are:
 ![plot](./md/dir/daq_firmware02.png)   
 
 
-## LUT Production inputs:    
+## LUT Creation inputs:    
 These are the files required to create LUT files
  - COOLER_mA.log
  - COOLER_V.log
@@ -309,17 +316,19 @@ These are the LUT files created by the Calibration program:
  - DIODE_V_LUT.h
  - LOAD_mA_LUT.h
  - LOAD_V_LUT.h
+ - some example LUT files are here
 
 
 ## Instructions For Use
-Compile the Calibration Code as outlined earlier.  
+Compile the Calibration Code as outlined earlier.  Configure test equipment to be able to connect via RS232. See [here](./md/test_equipment.md) for cabling and configuration of test equipment setup. 
+
 Connect a Pi DAQ to be calibrated (DUT Pi), via Ethernet cable, to the Pi inside the Calibration Box.    
 Verify the Pi DAQ has an IP Address in the range of:  192.168.123.1 - 192.168.123.254.    
 --Do not use the IP Address 192.168.123.7--    
-Connect the 4 pieces of test equipment: Yokogawa WT310E, Agilent E3648, HP34401 x2  vi USB
+Connect the 4 pieces of test equipment: Yokogawa WT310E, Agilent E3648, HP34401 x2  via USB cable, or USB->RS232 cable + NULL modem cable
 
 Start the application with the command:   **./cal**   
-Verify the 4 pieces of test equipment are detected correctly.
+Verify the 4 pieces of test equipment are detected correctly. If something is not detected, the program will alert you.
 
 At the first menu, select 1. Automatic Calibration. Just hit the number 1 key and it will start    
 ![plot](./md/tests/auto1.png)   
@@ -333,7 +342,15 @@ This will automatically run the routines for you. The different routines that ar
    - Measure Thermocouple Temperature   
 
 ### First Iteration of Cal Routines in Automatic Calibration    
-This covers each calibration routine, to understand any cabling changes and what the test is doing.    
+This covers each calibration routine, to understand any cabling changes and what the test is doing. Each individual routine runs multiple times to gather enough data to make accurate LUTs. If you would like to modify the auto cal sequence, look in the src/ directory, and find file CPP_Cal.cpp. The auto calibration routine is controlled by function  ```void Automatic_Calibration(PI* pi, WT300E* yokogawa, Meter* HP34401A, Meter* HP34401B, PowerSupply* E3648A, Write_Log* FileWrite)```   
+![plot](./md/compile/cal_routine.png)    
+Functions can be moved around if desired. It is important to note whether cabling changes are needed between tests. In the code provided, alerts are given and the program pauses when a cabling changes is needed. If you modify the sequence, you need to be aware of when a cabling change is needed. There are only 3 cal routines which may require a cabling change: Diode Calibration, Pi DAQ Output Voltage Calibration, and Pi DAQ Current Output Calibration.  Here is table describing which tests require a banana cable change:   
+| From Test | To Diode Cal | To DAQ V_Cal | To DAQ mA Cal |
+|-----------|--------------|--------------|-------------------|
+| Diode Cal | N/A | cable change | N/A |
+| DAQ V_Cal | cable change | N/A | cable change |
+| DAQ mA_Cal | N/A | cable change | N/A | 
+
 #### Thermocouple Measurement   
 Cabling:
 - 3 thermocouples are plugged into the Pi DAQ. (the yellow connectors at the front of the board)   

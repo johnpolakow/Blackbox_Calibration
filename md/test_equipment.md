@@ -23,15 +23,23 @@ not shown in this diagram are:
   - USB->RS232 connections    
   
 ### Cabling for Cooler mA Calibration (Pi DAQ measuring CCC current)    
+cabling specific to this test is outlined in green    
 ![plot](./equipment/Cooler_mA_Cal.png)   
 
 ### Cabling for Cooler V Calibration (Pi DAQ measuring Voltage out to CCC)    
+cabling specific to this test is outlined in green   
 ![plot](./equipment/Cooler_V.png)   
 
 ### Cabling for Diode Calibration (Pi DAQ measuring Voltage @ diode)    
+cabling specific to this test is outlined in green   
 ![plot](./equipment/Diode_Cal.png)    
 
 ### Cabling for Communication Links    
+required com cables:    
+  - Ethernet x 1
+  - USB 2.0 cable, Male A to Male B (for Yokogawa)
+  - USB -> RS232 converter x3 *note: actual RS232 req'd, USB -> ttl/uart will not work
+  - NULL modem cable x 3
 ![plot](./equipment/com.png)    
 
 ## Configuring RS232 on Test Equipment

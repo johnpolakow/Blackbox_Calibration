@@ -23,7 +23,7 @@ not shown in this diagram are:
   - USB->RS232 connections    
   
 ### Cabling for Cooler mA Calibration (Pi DAQ measuring CCC current)    
-![plot](./equipment/Cooler_ma_Cal.png)   
+![plot](./equipment/Cooler_mA_Cal.png)   
 
 ### Cabling for Cooler V Calibration (Pi DAQ measuring Voltage out to CCC)    
 ![plot](./equipment/Cooler_V.png)   
@@ -42,8 +42,8 @@ Starting with HP34401. First turn on the navigation menu, hit the shift button, 
 This is the first screen that shows up:      
 ![plot](./equipment/HP/Ameas.JPG)    
 
-Navigate the menus by using the left & right buttons to browse through the submenus. To select a a menu andenter it, use the down key. To exit a submenu and move up, use the up key. To save changes and exit hit the Auto/Man key:    
-![plot](./equipment/HP/menu_sel_enter.JPG)   
+Navigate the menus by using the left & right buttons to browse through the submenus. To select a submenu and enter it, use the down key. To exit a submenu and move up, use the up key. To save changes and exit, hit the Auto/Man key:    
+![plot](./equipment/menu_sel_enter.JPG)   
 
 Arrow over to 'E: I/O Menu' and hit the down arrow:
 ![plot](./equipment/HP/E_IO.JPG)   
@@ -66,7 +66,7 @@ Remember to hit Enter (Auto/Man) button to save your options
 
 Configure RS232 on Agilent E3648A:   
 Turn on the menu system for the Agilent Power Supply. Hit the 'I/O Config' button:   
-![plot](./equipment/HP/E3648A_menu_on.png) 
+![plot](./equipment/E3648A_menu_on.png) 
 
 Use the rotary knob to change selections. Turn the knob until it shows 'RS232' then hit the 'I/O Config' button again to select RS232.    
 The menu advances to the next option: baud rate. Turn the rotary knob until '9600' is selected.  Hit 'I/O Config' again to advance to the bit polarity option.

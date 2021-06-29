@@ -1,6 +1,6 @@
 # Blackbox_Calibration
 
-This repo is for the setup and use of the Calibration Relay Box used to Calibrate the Pi Based DAQ. The calibration box:
+This repo is for the setup and use of the Calibration Relay Box used to Calibrate the Pi Based DAQ. The calibration box:     
 ![plot](./md/equipment/pi_chassis.jpg)   
 
 used for calibrating the Pi based DAQ board:    

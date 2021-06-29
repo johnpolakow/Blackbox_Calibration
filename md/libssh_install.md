@@ -94,6 +94,14 @@ Execute either of these commands to locate g++ search locations for libaries:
 ```g++ -v```     
 ```g++ -print-search-directories```     
 
+Also look for the package:  
+```dpkg -L libssh```
+
+when it's looking for a dynamic library(.so file), the linker searches:    
+  - directories in the **LD_LIBRARY_PATH*** environment variable 
+  - directories in the executable's rpath
+  - directories on the system search path, which consists of the entries in **/etc/ld.so.conf**, and files in  **/lib** and **/usr/lib**
+
 There's two issues you may experience: trouble locating libssh header files or trouble locating libssh object files (.so files). If you are getting errors at runtime, like the following:   
 ![plot](./libssh/lib_error.png)    
 ![plot](./libssh/lib_err2.png)  
@@ -104,6 +112,8 @@ Then you probably have an old version of libssh still installed. Check the direc
 ```/lib```
 
 
+
+## Generate Local SSH Keys on Calibration Pi
 Before running the Calibration executable, it is necessary to generate local ssh keys (on the Calibration Pi) to send to the server (DUT Pi). 
 Create the key pair on the client computer, in the .ssh directory:   
 ```cd ~/.ssh ```
